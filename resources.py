@@ -1,12 +1,13 @@
 import xarray as xr
 import os.path
+import numpy as np
 
-LCCMR_ROOT = os.path.expanduser(  # Replaces a tilde in the path with the user's home directory
+LCCMR_ROOT = os.path.expanduser(  # expanduser replaces a tilde in the path with the user's home directory
     "~/Downloads/LCCMR_IBIS/")
 
-OUTPUT_ROOT = "output/"
+OUTPUT_ROOT = os.getcwd()+"/output/"    # getcwd gives us the path to the working directory
 
-GCMS = {"CNRM-CM5", "bcc-csm1-1", "MIROC5", "CESM1", "GFDL-ESM2M"}
+GCMS = ("CNRM-CM5", "bcc-csm1-1", "MIROC5", "CESM1", "GFDL-ESM2M")
 RCPS = ("HISTORIC", "RCP4.5", "RCP8.5")
 TIMEFRAMES = ("1980-1999", "2040-2059", "2080-2099")
 
@@ -27,9 +28,17 @@ def get_dataset(gcm, rcp, timeframe):
     # TODO: The next line prints something and I'm not sure what or why....
     return xr.open_mfdataset(filenames, combine="by_coords")
 
+def trim_relaxation_zone(data):
+    print(data)
+    data[dict(lat=slice(None, 5))] = np.nan
+    data[dict(lat=slice(-5, None))] = np.nan
+    data[dict(lon=slice(None, 10))] = np.nan
+    data[dict(lat=slice(-5, None))] = np.nan
+    return data
+
 
 def convert_temp(input, input_units, output_units):
-    if input_units == output_units: return input_units
+    if input_units == output_units: return input
 
     if input_units == "F" and output_units == "C": return (input - 32) * 5 / 9
     if input_units == "C" and output_units == "F": return input * 9 / 5 + 32
@@ -56,3 +65,11 @@ def get_all_temp_units(temps):
     result = {}
     for unit in temps: result[unit] = convert_temp(input_temp, input_unit, unit)
     return result
+
+def get_temp_string(temps):
+    # Temps formatted as in get_all_temp_units
+    # Outputs a string with the temperature value that takes priority in get_all_temp_units, labeled by its units
+    # (e.g. 90F)
+    for unit in temps:
+        if temps[unit] != None:
+            return str(temps[unit])+unit
