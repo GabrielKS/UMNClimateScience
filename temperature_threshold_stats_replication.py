@@ -15,16 +15,18 @@ def threshold_above(rcp, timeframe, threshold_F=None, threshold_C=None, threshol
     # Populate all temperature fields
     threshold_F, threshold_C, threshold_K = resources.get_all_temp_units(temp_dict).values()
 
-    datasets = [resources.get_dataset(gcm, rcp, timeframe) for gcm in resources.GCMS]
+    datasets = [resources.get_dataset(gcm, rcp, timeframe) for gcm in resources.GCMS]   #Load the data
+    for dataset in datasets: print(dataset["tmax"]["lat"])
     tmaxes = xr.concat([dataset["tmax"]  # Combine the tmax values from all the Datasets into one DataArray
                        .squeeze(dim="lev", drop=True) for dataset in datasets],  # Get rid of the lev dimension
                        dim=pd.Index(resources.GCMS, name="gcm"))  # New dimension is indexed by GCM name
+    print("***"+str(tmaxes["lat"]))
     tmaxes = resources.trim_relaxation_zone(tmaxes.load())
-    avg_tmax = tmaxes.mean(dim="gcm", skipna=False) #TODO: Terin's is average of counts, not counts of average
-    counts = avg_tmax.where(avg_tmax >= threshold_C).count(dim="time")
-    counts = counts.where(
-        ~np.isnan(avg_tmax.sum(dim="time", skipna=False)))  # TODO: find a less hacky way to put the NaNs back
+    mask = resources.collapse_find_valid(tmaxes, {"time", "gcm"})
+    counts = tmaxes.where(tmaxes >= threshold_C).count(dim="time")
+    counts = counts.where(mask)
     counts /= 20  # Divide by number of years. TODO: get this number programmatically
+    counts = counts.mean(dim="gcm", skipna=False)
     counts.name = "days_tmax_at_or_above_" + threshold_string
     counts.attrs["threshold (F C)"] = str(threshold_F) + " " + str(threshold_C)
     return counts
