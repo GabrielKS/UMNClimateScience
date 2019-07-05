@@ -65,13 +65,30 @@ def round_coords(data, dims):
 # Erases likely-inaccurate values at the edge of the simulation
 # See Terin's "trimRelaxationZone"
 def trim_relaxation_zone(data):
+    # If the data is in Dask parallelizable form, load it all into memory so addresses can be assigned
     chunks = data.chunks
-    if (chunks != None): data.load()
+    if chunks is not None: data.load()
+
+    # Terin's code seems to imply that all data in the first 5 and last 5 latitude coordinates,
+    # and all data in the first 10 and last 5 longitude coordinates, should be erased:
+    """
     data[dict(lat=slice(None, 5))] = np.nan
     data[dict(lat=slice(-5, None))] = np.nan
-    data[dict(lon=slice(None, 10))] = np.nan  # TODO: Why should this be 10 and the rest 5?
+    data[dict(lon=slice(None, 10))] = np.nan
+    data[dict(lon=slice(-5, None))] = np.nan
+    """
+
+    # However, Terin's data seems to imply that all data in the first 10 and last 5 latitude coordinates,
+    # and all data in the first 5 and last 5 longitude coordinates (see e.g. (0,36,0)), should be erased:
+    data[dict(lat=slice(None, 10))] = np.nan
     data[dict(lat=slice(-5, None))] = np.nan
-    if (chunks != None): data.chunk(chunks)
+    data[dict(lon=slice(None, 5))] = np.nan
+    data[dict(lon=slice(-5, None))] = np.nan
+
+    # TODO: learn more about how and why this should be happening,
+    # including why it's 10 at one edge and 5 at all the others.
+
+    if chunks is not None: data.chunk(chunks)  # If the data was in Dask form, put it back
     return data
 
 
@@ -85,17 +102,17 @@ def collapse_find_valid(data, dims):
 # HELPER FUNCTIONS:
 
 # Convert temperature. Works with "F" for Fahrenheit, "C" for Celsius, "K" for Kelvin.
-def convert_temp(input, input_units, output_units):
-    if input_units == output_units: return input
+def convert_temp(input_temp, input_units, output_units):
+    if input_units == output_units: return input_temp
 
-    if input_units == "F" and output_units == "C": return (input - 32) * 5 / 9
-    if input_units == "C" and output_units == "F": return input * 9 / 5 + 32
+    if input_units == "F" and output_units == "C": return (input_temp - 32) * 5 / 9
+    if input_units == "C" and output_units == "F": return input_temp * 9 / 5 + 32
 
-    if input_units == "K" and output_units == "C": return input - 273.15
-    if input_units == "C" and output_units == "K": return input + 273.15
+    if input_units == "K" and output_units == "C": return input_temp - 273.15
+    if input_units == "C" and output_units == "K": return input_temp + 273.15
 
-    if input_units == "F" and output_units == "K": return convert_temp(convert_temp(input, "F", "C"), "C", "K")
-    if input_units == "K" and output_units == "F": return convert_temp(convert_temp(input, "K", "C"), "C", "F")
+    if input_units == "F" and output_units == "K": return convert_temp(convert_temp(input_temp, "F", "C"), "C", "K")
+    if input_units == "K" and output_units == "F": return convert_temp(convert_temp(input_temp, "K", "C"), "C", "F")
 
 
 # Outputs a dict with temperature in all three units.
@@ -104,7 +121,7 @@ def convert_temp(input, input_units, output_units):
 def get_all_temp_units(temps):
     input_unit = None
     for unit in temps:
-        if temps[unit] != None:
+        if temps[unit] is not None:
             input_unit = unit
             break
     input_temp = temps[input_unit]
@@ -118,5 +135,5 @@ def get_all_temp_units(temps):
 # Input should be formatted as in get_all_temp_units (e.g. 90F)
 def get_temp_string(temps):
     for unit in temps:
-        if temps[unit] != None:
+        if temps[unit] is not None:
             return str(temps[unit]) + unit

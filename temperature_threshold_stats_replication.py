@@ -62,18 +62,22 @@ def format_dataset(data):
 
 
 def main():
+    path = resources.OUTPUT_ROOT + "temperature_threshold_stats_replicated.nc"
+
+    # """
     # Do the calculations:
     result = format_dataset(threshold_above_with_difference("RCP4.5", "2040-2059", threshold_F=90))
-    path = resources.OUTPUT_ROOT + "temperature_threshold_stats_replicated.nc"
     # Delete the existing file to avoid a permissions error when we try to overwrite
     if os.path.exists(path): os.remove(path)
     result.to_netcdf(path=path)
     print("DONE CALCULATING")
+    # """
 
+    # """
     # Compare to Terin's (for a more detailed comparison, one would want to page through the values):
-    name = [key for key in result.keys()][0]
     old = xr.open_dataset("compare/temperature_threshold_stats.nc")
     new = xr.open_dataset(path)
+    name = [key for key in new.keys()][0]
     print("\n\nOLD:")
     print(old)
     print("\nNEW:")
@@ -82,6 +86,14 @@ def main():
     print(old[name])
     print("\nNEW:")
     print(new[name])
+    print("\n\nELEMENT-WISE DIFFERENCES:")
+    for index, old_value in np.ndenumerate(old[name]):
+        new_value = new[name][index].values
+        # Values are equal if they are both NaN or if they are "close enough" (because of floating-point rounding)
+        if not ((np.isnan(old_value) and np.isnan(new_value)) or np.isclose(old_value, new_value)):
+            print(str(index) + ": old=" + str(old_value) + ", new=" + str(new_value))
+    print("DONE COMPARING")
+    # """
 
 
 if __name__ == "__main__":
