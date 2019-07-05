@@ -1,3 +1,6 @@
+#  Written by Gabriel Konar-Steenberg in the summer of 2019.
+#  Part of a University of Minnesota Department of Soil, Water, and Climate climate modeling project.
+
 import numpy as np  # Helps with data processing
 import netCDF4 as nc  # xarray uses this behind the scenes
 import Ngl  # Planning to use this for graphics

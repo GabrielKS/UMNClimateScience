@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Original Code" pattern="file[UMNClimateScience]:*/&amp;&amp;!file[UMNClimateScience]:.idea//*&amp;&amp;!file[UMNClimateScience]:compare//*&amp;&amp;!file[UMNClimateScience]:output//*&amp;&amp;!file[UMNClimateScience]:samples//*" />
+</component>
