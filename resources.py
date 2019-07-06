@@ -16,7 +16,7 @@ LCCMR_ROOT = os.path.expanduser("~/Downloads/LCCMR_IBIS/")
 OUTPUT_ROOT = os.getcwd() + "/output/"
 
 # Input options:
-GCMS = ("CNRM-CM5", "bcc-csm1-1", "MIROC5", "CESM1", "GFDL-ESM2M")
+GCMS = ("CNRM-CM5", "bcc-csm1-1", "MIROC5", "CESM1", "GFDL-ESM2M")  # Ordered only for convenience
 RCPS = ("HISTORIC", "RCP4.5", "RCP8.5")
 TIMEFRAMES = ("1980-1999", "2040-2059", "2080-2099")
 
@@ -92,11 +92,14 @@ def trim_relaxation_zone(data):
     return data
 
 
-# Takes a DataArray and returns true for every cell where all the values along dim are defined (i.e. not NaN)
+# Takes a DataArray and returns true for every cell where all the values along dims are defined (i.e. not NaN)
 # Use to reinsert markers of invalid data when an operation has put a (false) valid value in
-# TODO: find a less hacky but no more brute force way to do this?
-def collapse_find_valid(data, dims):
-    return ~np.isnan(data.sum(dim=dims, skipna=False))
+def collapse_all_valid(data, dims):
+    return ~np.isnan(data).any(dim=dims)    # Data is valid if not any of it is NaN, i.e. all of it is non-NaN
+
+# Same as collapse_all_valid but returns true for every cell where *any* of the values along dims are defined
+def collapse_any_valid(data, dims):
+    return ~np.isnan(data).all(dim=dims)    # Data is valid if not all of it is NaN, i.e. any of it is non-NaN
 
 
 # HELPER FUNCTIONS:
