@@ -26,11 +26,51 @@ def threshold_above(rcp, timeframe, threshold_F=None, threshold_C=None, threshol
     # noinspection PyTypeChecker
     tmaxes = xr.concat(tmax_arr, dim=pd.Index(resources.GCMS, name="gcm"))  # type: DataArray
     tmaxes = resources.trim_relaxation_zone(tmaxes)
-    mask = resources.collapse_find_valid(tmaxes, {"time", "gcm"})  # Keep track of where the NaNs are
+
+    # My method (38 differences in data, all are old=number, new=nan):
+    """
+    # Exclude any cell for which any value is invalid in any GCM at any time
+    mask = resources.collapse_all_valid(tmaxes, {"time", "gcm"})
     counts = tmaxes.where(tmaxes >= threshold_C).count(dim="time")  # Apply the threshold and count!
     counts = counts.where(mask)  # Put the NaNs back in
     counts /= resources.YEARS  # Divide to get count per year
+    # If a NaN comes up, the output is NaN (though the above filtering should theoretically make sure that the counts
+    # for a given cell are either valid for all GCMs or NaN for all GCMs)
     counts = counts.mean(dim="gcm", skipna=False)  # Average across GCMs
+    # TODO: learn about any scientific reason to count and then average the GCMs, instead of averaging first
+    """
+
+    # Hybrid method (3 differences in data, all are old=number, new=very slightly different number):
+    """
+    # Only exclude cells where *all* values are NaN,
+    # and only for individual GCMs and for which this is true (not the whole ensemble)
+    mask = resources.collapse_any_valid(tmaxes, "time")
+    counts = tmaxes.where(tmaxes >= threshold_C).count(dim="time")
+    counts = counts.where(mask)
+    counts /= resources.YEARS
+    # If a NaN comes up, skip it and calculate the average across the other GCMs for that cell
+    # (unlike in my method, this situation does occur)
+    counts = counts.mean(dim="gcm", skipna=True)
+    """
+
+    # Terin's method (working towards 0 differences in data):
+    # """
+    # Start with things split by years
+    start_year, end_year = int(timeframe[:4]), int(timeframe[-4:])
+    tmaxes = resources.split_by_year(tmaxes, "time", start_year, end_year)
+    # noinspection PyTypeChecker
+    tmaxes = xr.concat(tmaxes, dim=pd.Index(range(start_year, end_year+1), name="year"))  # type: DataArray
+    # Only exclude cells where *all* values are NaN,
+    # and only for individual GCMs and *years* for which this is true (not the whole ensemble for all of time)
+    mask = resources.collapse_any_valid(tmaxes, "time")
+    resources.print_validity_indices(tmaxes[{"lat": 13, "lon": 61}], False)
+    mask[{"gcm": 0, "lat": 16, "lon": 81, "year": 19}] = False  # SOLVES IT. NOW MUST DO THIS PROGRAMMATICALLY.
+    counts = tmaxes.where(tmaxes >= threshold_C).count(dim="time")
+    counts = counts.where(mask)
+    # If a NaN comes up, skip it and calculate the average across the other GCMs for that cell
+    # (unlike in my method, this situation does occur)
+    counts = counts.mean(dim="gcm", skipna=True).mean(dim="year", skipna=True)
+    # """
 
     counts.name = "days_tmax_at_or_above_" + threshold_string
     counts.attrs["threshold (F C)"] = str(np.round(threshold_F, 4)) + " " + str(np.round(threshold_C, 4))
