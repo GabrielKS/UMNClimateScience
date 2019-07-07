@@ -53,18 +53,17 @@ def threshold_above(rcp, timeframe, threshold_F=None, threshold_C=None, threshol
     counts = counts.mean(dim="gcm", skipna=True)
     """
 
-    # Terin's method (working towards 0 differences in data):
+    # Terin's method (0 differences in data):
     # """
     # Start with things split by years
     start_year, end_year = int(timeframe[:4]), int(timeframe[-4:])
     tmaxes = resources.split_by_year(tmaxes, "time", start_year, end_year)
     # noinspection PyTypeChecker
     tmaxes = xr.concat(tmaxes, dim=pd.Index(range(start_year, end_year+1), name="year"))  # type: DataArray
-    # Only exclude cells where *all* values are NaN,
+    # Only exclude cells where *the first* value (time-wise) is NaN,
     # and only for individual GCMs and *years* for which this is true (not the whole ensemble for all of time)
-    mask = resources.collapse_any_valid(tmaxes, "time")
-    resources.print_validity_indices(tmaxes[{"lat": 13, "lon": 61}], False)
-    mask[{"gcm": 0, "lat": 16, "lon": 81, "year": 19}] = False  # SOLVES IT. NOW MUST DO THIS PROGRAMMATICALLY.
+    mask = ~np.isnan(tmaxes[{"time": 0}])
+    del mask["time"]    # Don't care about time anymore
     counts = tmaxes.where(tmaxes >= threshold_C).count(dim="time")
     counts = counts.where(mask)
     # If a NaN comes up, skip it and calculate the average across the other GCMs for that cell
