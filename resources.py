@@ -11,9 +11,8 @@ import calendar
 # CONSTANTS:
 
 # Where the input data can be found  (expanduser replaces a tilde in the path with the user's home directory)
-from xarray import DataArray
-
 LCCMR_ROOT = os.path.expanduser("~/Downloads/LCCMR_IBIS/")
+STATS_ROOT = os.path.expanduser("~/Downloads/ensemble_average_stats/")
 
 # Where the output data should be stored (getcwd gives us the path to the working directory)
 OUTPUT_ROOT = os.getcwd() + "/output/"
@@ -22,6 +21,11 @@ OUTPUT_ROOT = os.getcwd() + "/output/"
 GCMS = ("CNRM-CM5", "bcc-csm1-1", "MIROC5", "CESM1", "GFDL-ESM2M")  # Ordered only for convenience
 RCPS = ("HISTORIC", "RCP4.5", "RCP8.5")
 TIMEFRAMES = ("1980-1999", "2040-2059", "2080-2099")
+
+# Which timeframes go with which RCPs, and vice versa
+# TODO: eliminate the redundancy here -- maybe with a different data structure, maybe with one or more functions
+TIMEFRAMES_FOR_RCP = {RCPS[0]: (TIMEFRAMES[0],), RCPS[1]: (TIMEFRAMES[1], TIMEFRAMES[2]), RCPS[2]: (TIMEFRAMES[2],)}
+RCPS_FOR_TIMEFRAME = {TIMEFRAMES[0]: (RCPS[0],), TIMEFRAMES[1]: (RCPS[1],), TIMEFRAMES[2]: (RCPS[1], RCPS[2])}
 
 # Coordinates are rounded to this number of decimals (see round_coords)
 COORD_DECIMALS = 4
@@ -60,7 +64,7 @@ def get_dataset(gcm, rcp, timeframe):
 # MAKING THE DATA LOOK NICER:
 
 # Round coordinates so that if the coordinates vary slightly between files, values can still be combined
-# TODO: There are more elegant, more consistent ways of accomplishing this
+# TODO: Maybe replace this with fuzzy coordinate matching (see https://github.com/pydata/xarray/issues/2217)
 def round_coords(data, dims):
     for dim in dims: data.coords[dim] = np.round(data.coords[dim], decimals=COORD_DECIMALS)
 
