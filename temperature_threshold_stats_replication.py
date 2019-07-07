@@ -59,15 +59,16 @@ def threshold_above(rcp, timeframe, threshold_F=None, threshold_C=None, threshol
     start_year, end_year = int(timeframe[:4]), int(timeframe[-4:])
     tmaxes = resources.split_by_year(tmaxes, "time", start_year, end_year)
     # noinspection PyTypeChecker
-    tmaxes = xr.concat(tmaxes, dim=pd.Index(range(start_year, end_year+1), name="year"))  # type: DataArray
+    tmaxes = xr.concat(tmaxes, dim=pd.Index(range(start_year, end_year + 1), name="year"))  # type: DataArray
     # Only exclude cells where *the first* value (time-wise) is NaN,
     # and only for individual GCMs and *years* for which this is true (not the whole ensemble for all of time)
     mask = ~np.isnan(tmaxes[{"time": 0}])
-    del mask["time"]    # Don't care about time anymore
+    del mask["time"]  # Don't care about time anymore
     counts = tmaxes.where(tmaxes >= threshold_C).count(dim="time")
     counts = counts.where(mask)
     # If a NaN comes up, skip it and calculate the average across the other GCMs for that cell
-    # (unlike in my method, this situation does occur)
+    # (unlike in my method, this situation does occur) and then average across years the same way
+    # (trying to do both averages in one step leads to 2 differences in data)
     counts = counts.mean(dim="gcm", skipna=True).mean(dim="year", skipna=True)
     # """
 
