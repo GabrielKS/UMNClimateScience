@@ -11,7 +11,6 @@ import resources
 import xarray as xr
 import os
 
-
 # Input:
 #  precip
 #   2080-2099_RCP4.5
@@ -33,8 +32,11 @@ import os
 #    temperature_threshold_stats.nc
 
 
+TYPES = ["temp", "precip"]
+
+
 # Get the path of a stats file. type is either "precip" or "temp", rcp and timeframe are as in resources
-def get_stats_path_relative(type, rcp, timeframe):
+def get_stats_path_relative(type, timeframe, rcp):
     long_type = "temperature" if type == "temp" else type
     return type + "/" + timeframe + "_" + rcp + "/" + long_type + "_threshold_stats.nc"
 
@@ -42,17 +44,17 @@ def get_stats_path_relative(type, rcp, timeframe):
 def get_all_stats_paths_relative():
     paths = {}
     # TODO: There might be a better data structure for this (thinking of something like a DataArray of Datasets)
-    for type in ["temp", "precip"]:
+    for type in TYPES:
         for timeframe in resources.TIMEFRAMES:
             for rcp in resources.RCPS_FOR_TIMEFRAME[timeframe]:
-                paths[(type, timeframe, rcp)] = get_stats_path_relative(type, rcp, timeframe)
+                paths[(type, timeframe, rcp)] = get_stats_path_relative(type, timeframe, rcp)
     return paths
 
 
-def get_stats_data_files():
+def get_stats_data_files(root=resources.STATS_ROOT):
     files = get_all_stats_paths_relative()
     for key in files:
-        files[key] = xr.open_dataset(resources.STATS_ROOT + files[key])
+        files[key] = xr.open_dataset(root + files[key])
     return files
 
 
@@ -90,7 +92,29 @@ def reformat(data_this):
     return resources.format_dataset(data_new)
 
 
+# Prints a sample of the results so one can verify that they are reasonable
+def print_sample():
+    samples = 10
+    import random
+    random.seed(0)  # For reproducibility
+    lats = random.sample(range(0, 100), samples)
+    lons = random.sample(range(0, 130), samples)
+
+    files = get_stats_data_files(root=resources.OUTPUT_ROOT + "new_ensemble_average_stats/")
+    temp_name = "days_tmax_at_or_above_90F"
+    precip_name = "yearly_at_or_above_t1"
+    variables = {"temp4.5": files[("temp", "2080-2099", "RCP4.5")][temp_name],
+                 "temp8.5": files[("temp", "2080-2099", "RCP8.5")][temp_name],
+                 "prec4.5": files[("precip", "2080-2099", "RCP4.5")][precip_name],
+                 "prec8.5": files[("precip", "2080-2099", "RCP8.5")][precip_name]}
+    for sample in range(0, samples):
+        for variable in variables:
+            print(variable + ": " + str(variables[variable][{"latDim": lats[sample], "lonDim": lons[sample]}].values))
+        print()
+
+
 def main():
+    # """
     # Read files
     files = get_stats_data_files()
 
@@ -113,6 +137,10 @@ def main():
         if not os.path.exists(folder): os.makedirs(folder)  # Create the enclosing folder structure if necessary
         if os.path.exists(path): os.remove(path)  # Delete the existing file if necessary
         files[key].to_netcdf(path=path)
+        # """
+
+    # Test
+    print_sample()
 
 
 if __name__ == "__main__":
