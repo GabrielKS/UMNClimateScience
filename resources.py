@@ -2,11 +2,13 @@
 #  Part of a University of Minnesota Department of Soil, Water, and Climate climate modeling project.
 
 # Global settings, code for getting data, and general helper functions
+import collections
 
 import xarray as xr
 import os.path
 import numpy as np
 import calendar
+import datetime
 
 # CONSTANTS:
 
@@ -123,6 +125,24 @@ def split_by_year(data, key, start_year, end_year):
         sections[year][key] = range(0, len(sections[year]["time"]))
         start_day = end_day
     return sections
+
+
+# Turns the output of threshold_above_with_difference into a Dataset formatted like Terin's NetCDF file
+def format_dataset(data):
+    # If it's already a Mapping (i.e. dict-like), we can just use that; otherwise, get the names
+    input_dict = data if isinstance(data, collections.abc.Mapping) else {variable.name: variable for variable in data}
+    dataset = xr.Dataset(input_dict)
+    dataset.attrs["creation_date"] = str(datetime.datetime.now())
+    delta_note = "delta=0: absolute data; delta=1: change from historical data"
+    # If we ever get a delta dimension with 3 or more coordinates, we add the note about delta=2
+    if max([len(input_dict[key]["delta"]) if "delta" in input_dict[key].dims else 0 for key in input_dict]) >= 3:
+        delta_note += "; delta=2: change from alternate scenario"
+    dataset.attrs["delta"] = delta_note
+    model_suite_string = ""
+    for model in GCMS: model_suite_string = model_suite_string + model + " "
+    dataset.attrs["model suite"] = model_suite_string[:-1]
+    # If necessary, lat and lon could be renamed latDim and lonDim, "singleton" could be added, etc.
+    return dataset
 
 
 # HELPER FUNCTIONS:

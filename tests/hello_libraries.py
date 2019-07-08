@@ -7,6 +7,7 @@ import Ngl  # Planning to use this for graphics
 import Nio  # Not used anymore
 import xarray as xr  # Main data processing library
 import dask  # xarray uses this behind the scenes
+import scipy  # Was going to use this to read files, but probably won't
 
 print(Nio.__version__)
 print(Ngl.__version__)

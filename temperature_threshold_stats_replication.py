@@ -2,14 +2,14 @@
 #  Part of a University of Minnesota Department of Soil, Water, and Climate climate modeling project.
 
 # Built to replicate the days_tmax_at_or_above_90F variable in Terin's "temperature_threshold_stats.nc"
-from xarray import DataArray
 
+
+from xarray import DataArray
 import resources
 import xarray as xr
 import pandas as pd
-import os
-import datetime
 import numpy as np
+import os
 
 
 # Calculates the number of days that the tmax is above the threshold, then averages this across all GCMs
@@ -89,34 +89,22 @@ def threshold_above_with_difference(rcp, timeframe, threshold_F=None, threshold_
     return combined
 
 
-# Turns the output of threshold_above_with_difference into a Dataset formatted like Terin's NetCDF file
-def format_dataset(data):
-    dataset = xr.Dataset({data.name: data})
-    dataset.attrs["creation_date"] = str(datetime.datetime.now())
-    dataset.attrs["delta"] = "delta=0: counts; delta=1: change from historical"
-    model_suite_string = ""
-    for model in resources.GCMS: model_suite_string = model_suite_string + model + " "
-    dataset.attrs["model suite"] = model_suite_string[:-1]
-    # If necessary, lat and lon could be renamed latDim and lonDim, "singleton" could be added, etc.
-    return dataset
-
-
 def main():
-    path = resources.OUTPUT_ROOT + "temperature_threshold_stats_replicated.nc"
+    output_path = resources.OUTPUT_ROOT + "temperature_threshold_stats_replicated.nc"
 
     # """
     # Do the calculations:
-    result = format_dataset(threshold_above_with_difference("RCP4.5", "2040-2059", threshold_F=90))
+    result = resources.format_dataset([threshold_above_with_difference("RCP4.5", "2040-2059", threshold_F=90)])
     # Delete the existing file to avoid a permissions error when we try to overwrite
-    if os.path.exists(path): os.remove(path)
-    result.to_netcdf(path=path)
+    if os.path.exists(output_path): os.remove(output_path)
+    result.to_netcdf(path=output_path)
     print("DONE CALCULATING")
     # """
 
     # """
     # Compare to Terin's (for a more detailed comparison, one would want to page through the values):
     old = xr.open_dataset("compare/temperature_threshold_stats.nc")
-    new = xr.open_dataset(path)
+    new = xr.open_dataset(output_path)
     name = [key for key in new.keys()][0]
     print("\n\nOLD:")
     print(old)
