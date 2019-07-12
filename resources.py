@@ -29,8 +29,11 @@ TIMEFRAMES = ("1980-1999", "2040-2059", "2080-2099")
 TIMEFRAMES_FOR_RCP = {RCPS[0]: (TIMEFRAMES[0],), RCPS[1]: (TIMEFRAMES[1], TIMEFRAMES[2]), RCPS[2]: (TIMEFRAMES[2],)}
 RCPS_FOR_TIMEFRAME = {TIMEFRAMES[0]: (RCPS[0],), TIMEFRAMES[1]: (RCPS[1],), TIMEFRAMES[2]: (RCPS[1], RCPS[2])}
 
-# Coordinates are rounded to this number of decimals (see round_coords)
-COORD_DECIMALS = 4
+# UNUSED: Coordinates were previously rounded to this number of decimals (see round_coords)
+# COORD_DECIMALS = 4
+
+# Lat/lon (and potentially) other coordinates can be stored in here for use across all programs
+# global_coordinates: will be defined later
 
 # Number of years in each model run (TODO: get this programmatically)
 YEARS = 20
@@ -65,10 +68,25 @@ def get_dataset(gcm, rcp, timeframe):
 
 # MAKING THE DATA LOOK NICER:
 
-# Round coordinates so that if the coordinates vary slightly between files, values can still be combined
-# TODO: Maybe replace this with fuzzy coordinate matching (see https://github.com/pydata/xarray/issues/2217)
+def get_global_coordinates():
+    file = xr.open_dataset(get_paths("CNRM-CM5", "HISTORIC", "1980-1999")[0])
+    return {k: file[k] for k in ("lat", "lon")}
+
+
+global_coordinates = get_global_coordinates()
+
+
+# Helps with a kind of fuzzy coordinate matching that does not exist as a built-in feature
+# (see https://github.com/pydata/xarray/issues/2217). Previous version rounded all coordinates to COORD_DECIMALS decimal
+# places; this version rounds coordinates to the nearest value in global_coordinates
 def round_coords(data, dims):
-    for dim in dims: data.coords[dim] = np.round(data.coords[dim], decimals=COORD_DECIMALS)
+    for dim in dims:
+        if dim not in global_coordinates:
+            raise Exception("No coordinates to round " + dim + " to")
+        else:
+            data.coords[dim] = [round_to_set(value, global_coordinates[dim]) for value in data.coords[dim]]
+            # for i in range(0, len(data.coords[dim])):
+            #     data.coords[dim][i] = round_to_set(data.coords[dim][i], global_coordinates[dim])
 
 
 # Erases likely-inaccurate values at the edge of the simulation
@@ -215,3 +233,8 @@ def undask(data):
 # If the data was in Dask form, put it back
 def redask(data, chunks):
     if chunks is not None: data.chunk(chunks)
+
+
+# Returns the element of options closest to value (if necessary, could optimize the searching by sorting options first)
+def round_to_set(value, options):
+    return min(options, key=lambda x: abs(value - x))

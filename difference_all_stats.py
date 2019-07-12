@@ -3,7 +3,6 @@
 
 # Input: all of the statistics in the NetCDF files within ensemble_average_stats
 # Output: same as input, except:
-#  - the lat/lon coordinates are rounded
 #  - For every 2080-2099 RCP4.5 variable with a delta dimension, delta=2 is now RCP4.5 minus RCP8.5
 #  - For every 2080-2099 RCP8.5 variable with a delta dimension, delta=2 is now RCP8.5 minus RCP4.5
 from xarray import DataArray
