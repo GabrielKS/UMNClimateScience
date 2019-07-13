@@ -3,6 +3,7 @@
 
 # Global settings, code for getting data, and general helper functions
 import collections
+import time
 
 import xarray as xr
 import os.path
@@ -35,6 +36,9 @@ RCPS_FOR_TIMEFRAME = {TIMEFRAMES[0]: (RCPS[0],), TIMEFRAMES[1]: (RCPS[1],), TIME
 # Lat/lon (and potentially) other coordinates can be stored in here for use across all programs
 # global_coordinates: will be defined later
 
+# Make sure any coordinate rounding does not change coordinates by more than this amount
+COORD_TOLERANCE = 0.0001
+
 # Number of years in each model run (TODO: get this programmatically)
 YEARS = 20
 
@@ -52,7 +56,7 @@ def get_paths(gcm, rcp, timeframe):
 # Get all the files in a certain dataset
 def get_data_files(gcm, rcp, timeframe):
     files = [xr.open_dataset(filename, chunks={}) for filename in get_paths(gcm, rcp, timeframe)]
-    for file in files: round_coords(file, {"lat", "lon"})
+    for i in range(0, len(files)): files[i] = round_coords(files[i], {"lat", "lon"})
     return files
 
 
@@ -60,6 +64,7 @@ def get_dataset(gcm, rcp, timeframe):
     files = get_data_files(gcm, rcp, timeframe)
     # TODO: The next line prints something and I'm not sure exactly what or why....
     combination = xr.combine_by_coords(files)
+    time.sleep(1)
     for file in files:  # If these assertions fail, then round_coords didn't fulfil its purpose
         assert len(combination["lat"]) == len(file["lat"])
         assert len(combination["lon"]) == len(file["lon"])
@@ -76,17 +81,14 @@ def get_global_coordinates():
 global_coordinates = get_global_coordinates()
 
 
-# Helps with a kind of fuzzy coordinate matching that does not exist as a built-in feature
+# Helps with a kind of fuzzy coordinate matching that does not exist as a built-in feature of combine_by_coords
 # (see https://github.com/pydata/xarray/issues/2217). Previous version rounded all coordinates to COORD_DECIMALS decimal
 # places; this version rounds coordinates to the nearest value in global_coordinates
 def round_coords(data, dims):
-    for dim in dims:
-        if dim not in global_coordinates:
-            raise Exception("No coordinates to round " + dim + " to")
-        else:
-            data.coords[dim] = [round_to_set(value, global_coordinates[dim]) for value in data.coords[dim]]
-            # for i in range(0, len(data.coords[dim])):
-            #     data.coords[dim][i] = round_to_set(data.coords[dim][i], global_coordinates[dim])
+    data = data.reindex({k: global_coordinates[k] for k in dims}, method="nearest", tolerance=COORD_TOLERANCE)
+    # TODO: some error checking here might be nice (right now, if indices are not within COORD_TOLERANCE, values just
+    #  silently become NaN)
+    return data
 
 
 # Erases likely-inaccurate values at the edge of the simulation
@@ -233,8 +235,3 @@ def undask(data):
 # If the data was in Dask form, put it back
 def redask(data, chunks):
     if chunks is not None: data.chunk(chunks)
-
-
-# Returns the element of options closest to value (if necessary, could optimize the searching by sorting options first)
-def round_to_set(value, options):
-    return min(options, key=lambda x: abs(value - x))
