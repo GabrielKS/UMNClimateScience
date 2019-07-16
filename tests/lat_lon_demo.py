@@ -17,12 +17,19 @@ def main():
     lat0 = files[0]["lat"].values  # Lat values from year 0 (i.e. 1980)
     lat19 = files[19]["lat"].values  # Lat values from year 19 (i.e. 1999)
     lat_stats = stats_file["lat"].values    # Lat values from historic temperature_threshold_stats
+    print("1980:")
     print(lat0)
+    print("1999:")
     print(lat19)
+    print("Threshold stats:")
     print(lat_stats)
+    print("1999 - 1980:")
     print(lat19 - lat0)  # lat19 and lat0 have differences (note: if ".values" is omitted above, differences round to 0)
+    print("Equal?")
     print((lat19 == lat0).all())
+    print("Threshold stats - 1980")
     print(lat_stats - lat0)  # lat_stats and lat0 have no differences to the relevant precision
+    print("Equal?")
     print((lat_stats == lat0).all())
 
 
