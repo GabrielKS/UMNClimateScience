@@ -2,21 +2,29 @@
 ;  Credit for that file: TET & PKS, 09/17/01 / tetwine@students.wisc.edu / pksnyder@students.wisc.edu.
 ;  Now part of a University of Minnesota Department of Soil, Water, and Climate climate modeling project.
 
+;  Takes natural vegetation, corn, and soy model runs and uses a land use map to compute a weighted average of the
+;  given input variable across these model runs, then saves this averaged dataset to the given output path.
+;  Note: This is a procedure, not a standalone program, so it must be called with parameters from some other NCL code.
+;  Example call for the "snod" (snow depth) variable:
+;   agg_generic("/path/to/natveg/snod.nc", "/path/to/corn/snod.nc", "/path/to/soy/snod.nc", "/path/to/landuse_map.nc", "snod", "/path/to/desired_output/snod.nc")
 
+
+procedure agg_generic(natveg_filename, corn_filename, soy_filename, landuse_filename, varname, output_filename)
+local natveg_filename, corn_filename, soy_filename, landuse_filename, variable_name, output_filename
 begin
 ;----------------------------------------------------------------------------
 ; Open files and define parameters
 ;----------------------------------------------------------------------------
-fh1 = addfile("/Users/twine/IBIS/LCCMR_MNwater/code/CESM1/RCP4.5_2040-2059/output_natveg_RCP4.5_2040-2059/monthly/aet.nc", "r");
-natveg = fh1->aet(180:,:,:);
+fh1 = addfile(natveg_filename, "r");
+natveg = fh1->$varname(180:,:,:);
 
-fh2 = addfile("/Users/twine/IBIS/LCCMR_MNwater/code/CESM1/RCP4.5_2040-2059/output_corn_RCP4.5_2040-2059/monthly/aet.nc", "r");
-corn = fh2->aet(180:,:,:)
+fh2 = addfile(corn_filename, "r");
+corn = fh2->$varname(180:,:,:)
 
-fh3 = addfile("/Users/twine/IBIS/LCCMR_MNwater/code/CESM1/RCP4.5_2040-2059/output_soy_RCP4.5_2040-2059/monthly/aet.nc", "r");
-soy = fh3->aet(180:,:,:)
+fh3 = addfile(soy_filename, "r");
+soy = fh3->$varname(180:,:,:)
 
-fh4 = addfile("/Users/twine/CropCover/Sun_landuse/maps/USDA_WRF_1112.nc", "r");
+fh4 = addfile(landuse_filename, "r");
 fsoy     = fh4->fsoy(:,:)
 fcorn    = fh4->fcorn(:,:)
 fcornsoy = fh4->fcornsoy(:,:)
@@ -28,33 +36,33 @@ NMON = 240
 ;----------------------------------------------------------------------------
 
 ;----------------------------------------------------------------------------
-; Open new file to write out the aet data
+; Open new file to write out the $varname data
 ;----------------------------------------------------------------------------
-outfile = addfile("/Users/twine/ncl/LCCMR_prop/CESM1/RCP4.5/2040-2059/aet_2040-2059_500ppm.nc", "c");
+outfile = addfile(output_filename, "c");
 ;----------------------------------------------------------------------------
 
 
-aet = new((/ NMON,NLAT,NLON /), float, 9e20);
-printVarSummary(aet)
+output = new((/ NMON,NLAT,NLON /), float, 9e20);
+printVarSummary(output)
 printVarSummary(natveg)
-aet = natveg(:,:,:)
+output = natveg(:,:,:)
 
 do lon=0,NLON-1
   do lat=0, NLAT-1
    do imon=0, NMON-1
    if (.not.ismissing(natveg(0,lat,lon))) then
 
-       aet(imon,lat,lon) = (1-fcorn(lat,lon)-fsoy(lat,lon)-fcornsoy(lat,lon))*natveg(imon,lat,lon) + \
+       output(imon,lat,lon) = (1-fcorn(lat,lon)-fsoy(lat,lon)-fcornsoy(lat,lon))*natveg(imon,lat,lon) + \
                            fcorn(lat,lon)*corn(imon,lat,lon) + \
                            fsoy(lat,lon)*soy(imon,lat,lon) + \
                            fcornsoy(lat,lon)*(0.5*corn(imon,lat,lon) + 0.5*(soy(imon,lat,lon)))
 
-;       if (aet(imon,lat,lon) .gt. 50.) then
-;       if (aet(imon,lat,lon) .gt. 15.) then
-;           aet(imon,lat,lon) = 9e20
+;       if (output(imon,lat,lon) .gt. 50.) then
+;       if (output(imon,lat,lon) .gt. 15.) then
+;           output(imon,lat,lon) = 9e20
 ;       end if
 
-    end if 
+    end if
     end do
   end do
 end do
@@ -65,17 +73,17 @@ time_month=ispan(1,NMON,1)
 ; Now write out data to new netcdf file with appropriate metadata, etc.
 ;----------------------------------------------------------------------------
 
-aet!0 = "time";
-aet&time = time_month
-aet!1 = "latitude";
-aet&latitude = fh2->latitude
-aet!2 = "longitude";
-aet&longitude = fh2->longitude
+output!0 = "time";
+output&time = time_month
+output!1 = "latitude";
+output&latitude = fh2->latitude
+output!2 = "longitude";
+output&longitude = fh2->longitude
 
 outfile->longitude = fh2->longitude
 outfile->latitude = fh2->latitude
 outfile->time = time_month
-outfile->aet=aet
+outfile->$varname=output
 
 
 end
