@@ -37,7 +37,6 @@ def threshold_above(rcp, timeframe, threshold_F=None, threshold_C=None, threshol
     # If a NaN comes up, the output is NaN (though the above filtering should theoretically make sure that the counts
     # for a given cell are either valid for all GCMs or NaN for all GCMs)
     counts = counts.mean(dim="gcm", skipna=False)  # Average across GCMs
-    # TODO: learn about any scientific reason to count and then average the GCMs, instead of averaging first
     """
 
     # Hybrid method (3 differences in data, all are old=number, new=very slightly different number):

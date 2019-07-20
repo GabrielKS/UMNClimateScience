@@ -74,7 +74,9 @@ def get_dataset(gcm, rcp, timeframe):
 # MAKING THE DATA LOOK NICER:
 
 def get_global_coordinates():
-    file = xr.open_dataset(get_paths("CNRM-CM5", "HISTORIC", "1980-1999")[0])
+    file = xr.open_dataset(OUTPUT_ROOT + "universal_mask.nc")
+    # Use this if you don't have universal_mask.nc
+    # file = xr.open_dataset(get_paths("CNRM-CM5", "HISTORIC", "1980-1999")[0])
     return {k: file[k] for k in ("lat", "lon")}
 
 
@@ -93,24 +95,24 @@ def round_coords(data, dims):
 
 # Erases likely-inaccurate values at the edge of the simulation
 # See Terin's "trimRelaxationZone"
-def trim_relaxation_zone(data):
+def trim_relaxation_zone(data, replace_with=np.nan):
     chunks = undask(data)
 
     # Terin's code seems to imply that all data in the first 5 and last 5 latitude coordinates,
     # and all data in the first 10 and last 5 longitude coordinates, should be erased:
     """
-    data[dict(lat=slice(None, 5))] = np.nan
-    data[dict(lat=slice(-5, None))] = np.nan
-    data[dict(lon=slice(None, 10))] = np.nan
-    data[dict(lon=slice(-5, None))] = np.nan
+    data[dict(lat=slice(None, 5))] = replace_with
+    data[dict(lat=slice(-5, None))] = replace_with
+    data[dict(lon=slice(None, 10))] = replace_with
+    data[dict(lon=slice(-5, None))] = replace_with
     """
 
     # However, Terin's data seems to imply that all data in the first 10 and last 5 latitude coordinates,
     # and all data in the first 5 and last 5 longitude coordinates (see e.g. (0,36,0)), should be erased:
-    data[dict(lat=slice(None, 10))] = np.nan
-    data[dict(lat=slice(-5, None))] = np.nan
-    data[dict(lon=slice(None, 5))] = np.nan
-    data[dict(lon=slice(-5, None))] = np.nan
+    data[dict(lat=slice(None, 10))] = replace_with
+    data[dict(lat=slice(-5, None))] = replace_with
+    data[dict(lon=slice(None, 5))] = replace_with
+    data[dict(lon=slice(-5, None))] = replace_with
 
     # TODO: learn more about how and why this should be happening,
     # including why it's 10 at one edge and 5 at all the others.
@@ -128,6 +130,10 @@ def collapse_all_valid(data, dims):
 # Same as collapse_all_valid but returns true for every cell where *any* of the values along dims are defined
 def collapse_any_valid(data, dims):
     return ~np.isnan(data).all(dim=dims)  # Data is valid if not all of it is NaN, i.e. any of it is non-NaN
+
+
+def collapse_n_valid(data, dims):
+    return data.count(dim=dims)
 
 
 # Outputs an array of DataArrays creating by splitting the input DataArray into yearly chunks
