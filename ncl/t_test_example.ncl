@@ -51,7 +51,7 @@ print(ttest_naive)
 print("Adjusted t-test:")
 print(ttest_adjusted)
 
-;Workaround to cause a warning to get PyCharm to show NCL output (TODO: find a better way):
+;Workaround: deliberately cause a warning to get PyCharm to show NCL output (TODO: find a better way):
 unused = addfile("Show me the output!", "please")  ;Remove if you can do so and still get the output of print() to show
 exit    ;Another workaround. Remove if you can do so and still get the program to exit
 end
