@@ -17,6 +17,7 @@ local series
 begin
 autocorr_array = esacr(series, 1)
 autocorr = autocorr_array(1)
+print("Autocorrelation: "+autocorr)
 n = count(series)
 return n*(1-autocorr)/(1+autocorr)
 end
@@ -40,16 +41,13 @@ n_raw_1 = count(sample_1)
 n_raw_2 = count(sample_2)
 n_adj_1 = adjusted_dof(sample_1)
 n_adj_2 = adjusted_dof(sample_2)
-print("Adjusted degrees of freedom")
-print((/n_adj_1, n_adj_2/))
+print("Adjusted degrees of freedom: "+(/n_adj_1, n_adj_2/))
 
 ttest_naive = ttest(avg_1, var_1, n_raw_1, avg_2, var_2, n_raw_2, False, False)
 ttest_adjusted = ttest(avg_1, var_1, n_adj_1, avg_2, var_2, n_adj_2, False, False)
 
-print("Naive t-test:")
-print(ttest_naive)
-print("Adjusted t-test:")
-print(ttest_adjusted)
+print("Naive t-test: "+ttest_naive)
+print("Adjusted t-test: "+ttest_adjusted)
 
 ;Workaround: deliberately cause a warning to get PyCharm to show NCL output (TODO: find a better way):
 unused = addfile("Show me the output!", "please")  ;Remove if you can do so and still get the output of print() to show
