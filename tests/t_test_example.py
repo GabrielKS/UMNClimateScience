@@ -3,6 +3,8 @@
 
 # Provides a demonstration of the t-test and adjusted t-test
 # Meant to be parallel to the one in NCL at t_test_example.ncl
+# As far as I can tell, the methods are now exactly the same, but the numbers still come out slightly different.
+# TODO: figure out why
 
 import numpy as np
 import pandas as pd
@@ -24,13 +26,14 @@ def esacr(x, mxlag):
     for k in range(mxlag + 1):  # Loop over the lags, from lag-0 to lag-mxlag
         result = 0
         for t in range(len(x) - k):  # Loop over all lag pairs in the input data
-            result += (x[t] - avg) * (x[t + k] - avg) / var
+            result += (x[t] - avg) * (x[t + k] - avg)
         result /= len(x) - k  # Divide the sum to get the average
+        result /= var
         results.append(result)
     return results
 
-    # Instead of dividing by the variance of x in the innermost loop above, as the NCL page explains it, we could
-    # follow Chatfield and normalize by dividing everything by the lag-0 result (which should always come out as 1).
+    # Instead of dividing by the variance of x above, as NCL does, we could follow Chatfield and normalize by dividing
+    # everything by the lag-0 result (which should always come out as 1).
     # These are mathematically and practically equivalent.
     # results_normalized = []
     # for i in range(len(results)):
@@ -91,11 +94,14 @@ def main():
     n_adj_2 = adjusted_dof(sample_2)
     print("Adjusted degrees of freedom: " + str([n_adj_1, n_adj_2]))
 
+    # noinspection PyUnresolvedReferences
     ttest_naive = scipy.stats.ttest_ind_from_stats(avg_1, std_1, n_raw_1, avg_2, std_2, n_raw_2).pvalue
+    # noinspection PyUnresolvedReferences
     ttest_adjusted = scipy.stats.ttest_ind_from_stats(avg_1, std_1, n_adj_1, avg_2, std_2, n_adj_2).pvalue
 
-    print("Naive t-test: "+str(ttest_naive))
+    print("Naive t-test: " + str(ttest_naive))
     print("Adjusted t-test: " + str(ttest_adjusted))
+
 
 if __name__ == "__main__":
     main()
