@@ -14,7 +14,13 @@ import datetime
 # CONSTANTS:
 
 # Where the input data can be found  (expanduser replaces a tilde in the path with the user's home directory)
-LCCMR_ROOT = os.path.expanduser("~/Downloads/LCCMR_IBIS/")
+PROCESSED_ROOT = os.path.expanduser("~/Downloads/LCCMR_IBIS/")
+
+# Currently contains all the raw data from MSI, but I may get rid of all but the SNOWH variable to save space
+# (snow seems to be the only thing I need this for)
+RAW_ROOT = os.path.expanduser("~/Downloads/snowh/")
+
+# Terin's stats
 STATS_ROOT = os.path.expanduser("~/Downloads/ensemble_average_stats/")
 
 # Where the output data should be stored (getcwd gives us the path to the working directory)
@@ -47,21 +53,22 @@ YEARS = 20
 
 # Get the paths to all the files in a certain dataset
 # Can't just use a wildcard for the paths because that would include IBISinput_20yrclim.nc
-def get_paths(gcm, rcp, timeframe):
-    base = LCCMR_ROOT + gcm + "/" + rcp + "/" + timeframe + "/WRF_IBISinput/IBISinput_"
+def get_paths(gcm, rcp, timeframe, raw=False):
+    base = RAW_ROOT + gcm + "/" + rcp + "/" + timeframe + "/IBISinput_" if raw \
+        else PROCESSED_ROOT + gcm + "/" + rcp + "/" + timeframe + "/WRF_IBISinput/IBISinput_"
     year0 = int(timeframe[:4])
-    return [base + str(year) + ".nc" for year in range(year0, year0 + 20)]
+    return [base + str(year) + ("_cst.nc" if raw else ".nc") for year in range(year0, year0 + 20)]
 
 
 # Get all the files in a certain dataset
-def get_data_files(gcm, rcp, timeframe):
-    files = [xr.open_dataset(filename, chunks={}) for filename in get_paths(gcm, rcp, timeframe)]
+def get_data_files(gcm, rcp, timeframe, raw=False):
+    files = [xr.open_dataset(filename, chunks={}) for filename in get_paths(gcm, rcp, timeframe, raw)]
     for i in range(0, len(files)): files[i] = round_coords(files[i], {"lat", "lon"})
     return files
 
 
-def get_dataset(gcm, rcp, timeframe):
-    files = get_data_files(gcm, rcp, timeframe)
+def get_dataset(gcm, rcp, timeframe, raw=False):
+    files = get_data_files(gcm, rcp, timeframe, raw)
     # TODO: The next line prints something and I'm not sure exactly what or why....
     combination = xr.combine_by_coords(files)
     time.sleep(1)

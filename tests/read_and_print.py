@@ -4,7 +4,7 @@
 import resources
 import Nio
 
-file = Nio.open_file(resources.LCCMR_ROOT + "CNRM-CM5/HISTORIC/1980-1999/WRF_IBISinput/IBISinput_1980.nc", "r")
+file = Nio.open_file(resources.PROCESSED_ROOT + "CNRM-CM5/HISTORIC/1980-1999/WRF_IBISinput/IBISinput_1980.nc", "r")
 print(file.variables["tmax"])
 
 files = resources.get_data_files("CNRM-CM5", "HISTORIC", "1980-1999")
