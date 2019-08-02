@@ -1,0 +1,102 @@
+# SFTP script to download one GCM's daily data.
+lcd Downloads/snowh
+cd ../shared/LCCMR
+
+# Replace these with the name of the GCM (remember to create the local folder structure first)
+lcd GFDL-ESM2M
+cd GFDL-ESM2M
+
+lcd HISTORIC/1980-1999 
+cd historical/allyears_daily 
+get IBISinput_1980_cst.nc 
+get IBISinput_1981_cst.nc 
+get IBISinput_1982_cst.nc 
+get IBISinput_1983_cst.nc 
+get IBISinput_1984_cst.nc 
+get IBISinput_1985_cst.nc 
+get IBISinput_1986_cst.nc 
+get IBISinput_1987_cst.nc 
+get IBISinput_1988_cst.nc 
+get IBISinput_1989_cst.nc 
+get IBISinput_1990_cst.nc 
+get IBISinput_1991_cst.nc 
+get IBISinput_1992_cst.nc 
+get IBISinput_1993_cst.nc 
+get IBISinput_1994_cst.nc 
+get IBISinput_1995_cst.nc 
+get IBISinput_1996_cst.nc 
+get IBISinput_1997_cst.nc 
+get IBISinput_1998_cst.nc 
+get IBISinput_1999_cst.nc 
+
+lcd ../../RCP4.5/2040-2059
+cd ../../RCP4.5/allyears_daily
+get IBISinput_2040_cst.nc 
+get IBISinput_2041_cst.nc 
+get IBISinput_2042_cst.nc 
+get IBISinput_2043_cst.nc 
+get IBISinput_2044_cst.nc 
+get IBISinput_2045_cst.nc 
+get IBISinput_2046_cst.nc 
+get IBISinput_2047_cst.nc 
+get IBISinput_2048_cst.nc 
+get IBISinput_2049_cst.nc 
+get IBISinput_2050_cst.nc 
+get IBISinput_2051_cst.nc 
+get IBISinput_2052_cst.nc 
+get IBISinput_2053_cst.nc 
+get IBISinput_2054_cst.nc 
+get IBISinput_2055_cst.nc 
+get IBISinput_2056_cst.nc 
+get IBISinput_2057_cst.nc 
+get IBISinput_2058_cst.nc 
+get IBISinput_2059_cst.nc 
+
+
+lcd ../2080-2099
+get IBISinput_2080_cst.nc 
+get IBISinput_2081_cst.nc 
+get IBISinput_2082_cst.nc 
+get IBISinput_2083_cst.nc 
+get IBISinput_2084_cst.nc 
+get IBISinput_2085_cst.nc 
+get IBISinput_2086_cst.nc 
+get IBISinput_2087_cst.nc 
+get IBISinput_2088_cst.nc 
+get IBISinput_2089_cst.nc 
+get IBISinput_2090_cst.nc 
+get IBISinput_2091_cst.nc 
+get IBISinput_2092_cst.nc 
+get IBISinput_2093_cst.nc 
+get IBISinput_2094_cst.nc 
+get IBISinput_2095_cst.nc 
+get IBISinput_2096_cst.nc 
+get IBISinput_2097_cst.nc 
+get IBISinput_2098_cst.nc 
+get IBISinput_2099_cst.nc 
+
+lcd ../../RCP8.5/2080-2099
+cd ../../RCP8.5/allyears_daily
+get IBISinput_2080_cst.nc 
+get IBISinput_2081_cst.nc 
+get IBISinput_2082_cst.nc 
+get IBISinput_2083_cst.nc 
+get IBISinput_2084_cst.nc 
+get IBISinput_2085_cst.nc 
+get IBISinput_2086_cst.nc 
+get IBISinput_2087_cst.nc 
+get IBISinput_2088_cst.nc 
+get IBISinput_2089_cst.nc 
+get IBISinput_2090_cst.nc 
+get IBISinput_2091_cst.nc 
+get IBISinput_2092_cst.nc 
+get IBISinput_2093_cst.nc 
+get IBISinput_2094_cst.nc 
+get IBISinput_2095_cst.nc 
+get IBISinput_2096_cst.nc 
+get IBISinput_2097_cst.nc 
+get IBISinput_2098_cst.nc 
+get IBISinput_2099_cst.nc 
+
+lcd ../..
+cd ../..
