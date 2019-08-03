@@ -34,15 +34,17 @@ def max_yearly_snow(input):
     return max_average
 
 
+# Prints out all the output so it can be scrolled through and sanity-checked by hand
 def print_output(output):
     for gcm in output.coords["gcm"].values:
         for scenario in output.coords["scenario"].values:
             for delta in output.coords["delta"].values:
-                print(gcm)
-                print(scenario)
-                print(delta)
+                print(gcm + " " + scenario + " " + delta + " " + "days_snow_above:")
                 resources.print_grid(np.round(
                     output["days_snow_above"].loc[{"gcm": gcm, "scenario": scenario, "delta": delta}].values, 1), " ")
+                print(gcm + " " + scenario + " " + delta + " " + "max_yearly_snow:")
+                resources.print_grid(np.round(
+                    output["max_yearly_snow"].loc[{"gcm": gcm, "scenario": scenario, "delta": delta}].values, 1), " ")
 
 
 def main():
@@ -84,8 +86,9 @@ def main():
     output_path = resources.OUTPUT_ROOT + "snow_stats.nc"
     output.to_netcdf(path=output_path)
 
-    output_from_file = xr.open_dataset(output_path)
-    print_output(output_from_file)
+    # To test:
+    # output_from_file = xr.open_dataset(output_path)
+    # print_output(output_from_file)
 
 
 if __name__ == "__main__":
