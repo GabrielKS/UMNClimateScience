@@ -58,8 +58,10 @@ def main():
     input = xr.concat(gcm_arr, dim=pd.Index(SNOW_GCMS, name="gcm"))
 
     output = xr.Dataset({"days_snow_above": snow_threshold(input), "max_yearly_snow": max_yearly_snow(input)})
+    # Keep the attributes so we can reapply them after the concat below erases them
+    attrs = {k: output[k].attrs for k in output.variables}
 
-    ensemble = output.mean(dim="gcm", keep_attrs=True)
+    ensemble = output.mean(dim="gcm")
     ensemble = ensemble.assign_coords(gcm="ensemble").expand_dims("gcm")
     output = xr.concat([ensemble, output], dim="gcm")
     delta_historic = output - output[{"scenario": 0}]
@@ -71,10 +73,12 @@ def main():
             .assign_coords(scenario=output.coords["scenario"][2]).expand_dims("scenario"),  # Put the metadata back in
         (output[{"scenario": 3}] - output[{"scenario": 2}])  # RCP8.5-RCP4.5
             .assign_coords(scenario=output.coords["scenario"][3]).expand_dims("scenario")],
-        dim="scenario")
+        dim="scenario", )
     output = xr.concat([output, delta_historic, delta_mid, delta_scenario],
                        dim=pd.Index(["absolute", "historic", "mid-century", "RCP"], name="delta"))
 
+    for variable in output.variables:
+        if variable in attrs: output[variable].attrs = attrs[variable]  # Reapply the attributes from above
     output.attrs["credit"] = "Created by Gabriel Konar-Steenberg's code in the summer of 2019. Part of a University " \
                              "of Minnesota Department of Soil, Water, and Climate climate modeling project."
     output.attrs["ensemble"] = "".join(map(lambda x: str(x) + " ", SNOW_GCMS))[:-1]
