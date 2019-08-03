@@ -20,7 +20,7 @@ def main():
     # introduce NaNs when the datasets are concatted)
     dataset_arr = {gcm + "/" + rcp + "/" + timeframe: resources.collapse_any_valid(
         resources.get_dataset(gcm, rcp, timeframe).squeeze(dim="lev", drop=True), "time")
-        for gcm in set(resources.GCMS)-{"CNRM-CM5"}  # TODO: Include new CNRM when possible (old has odd NaNs in wspd)
+        for gcm in set(resources.GCMS) - {"CNRM-CM5"}  # TODO: Include new CNRM when possible (old has odd NaNs in wspd)
         for timeframe in resources.TIMEFRAMES
         for rcp in resources.RCPS_FOR_TIMEFRAME[timeframe]}
     # Somewhat counterintuitively, latter "for...in..." expressions become inner loops
@@ -52,16 +52,6 @@ def main():
     output_path = resources.OUTPUT_ROOT + "universal_mask.nc"
     if os.path.exists(output_path): os.remove(output_path)
     collapsed_mask.to_netcdf(path=output_path)
-
-
-# Takes a 2D array (or array-like) of booleans and prints it in 1s and 0s
-def print_as_binary(boolean_2d):
-    print_grid(np.where(boolean_2d, 1, 0))
-
-
-def print_grid(arr_2d, spacer=""):
-    strings = ["".join(map(lambda x: str(x)+spacer, row)) for row in arr_2d]
-    for s in strings: print(s)
 
 
 if __name__ == "__main__":

@@ -48,6 +48,12 @@ COORD_TOLERANCE = 0.0001
 # Number of years in each model run (TODO: get this programmatically)
 YEARS = 20
 
+UNIVERSAL_MASK = None
+try:
+    UNIVERSAL_MASK = xr.open_dataset(OUTPUT_ROOT + "universal_mask.nc")["mask"]
+except FileNotFoundError:
+    print("Universal Mask not found")
+
 
 # INPUT:
 
@@ -63,7 +69,19 @@ def get_paths(gcm, rcp, timeframe, raw=False):
 # Get all the files in a certain dataset
 def get_data_files(gcm, rcp, timeframe, raw=False):
     files = [xr.open_dataset(filename, chunks={}) for filename in get_paths(gcm, rcp, timeframe, raw)]
-    for i in range(0, len(files)): files[i] = round_coords(files[i], {"lat", "lon"})
+    for i in range(0, len(files)):
+        # Judgement call: better to rename the raw datasets' dimensions than to deal with two sets of names
+        if raw: files[i] = files[i].rename({"LAT": "lat", "LON": "lon", "Time": "time"})
+        files[i] = round_coords(files[i], {"lat", "lon"})
+
+    # Kludge to make up for the fact that the time coordinates for
+    # GFDL-ESM2M/historical/allyears_daily/IBISinput_1998_cst.nc are mislabeled (they seem to refer to 1981, not 1998).
+    # TODO: Remove this as soon as possible
+    if raw and gcm == "GFDL-ESM2M" and rcp == "HISTORIC" and timeframe == "1980-1999":
+        # Manually generate the correct time coordinates
+        files[18]["time"] = np.arange("1998", "1999", dtype = "datetime64[D]")
+        print("Warning: GDFL-ESM2M 1998 raw input time coordinates kludged")  # Remind ourselves of this
+
     return files
 
 
@@ -231,6 +249,16 @@ def print_validity_indices(data, find_nans):
     for index, value in np.ndenumerate(data):
         if (find_nans and np.isnan(value)) or ((not find_nans) and (not np.isnan(value))):
             print(index)
+
+
+# Takes a 2D array (or array-like) of booleans and prints it in 1s and 0s
+def print_as_binary(boolean_2d):
+    print_grid(np.where(boolean_2d, 1, 0))
+
+
+def print_grid(arr_2d, spacer=""):
+    strings = ["".join(map(lambda x: str(x) + spacer, row)) for row in arr_2d]
+    for s in strings: print(s[:len(s)-len(spacer)])
 
 
 # Outputs an array filled with the number of days in each year from start_year to end_year inclusive
