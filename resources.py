@@ -89,7 +89,7 @@ def get_dataset(gcm, rcp, timeframe, raw=False):
     files = get_data_files(gcm, rcp, timeframe, raw)
     # TODO: The next line prints something and I'm not sure exactly what or why....
     combination = xr.combine_by_coords(files)
-    time.sleep(1)
+    # time.sleep(1)
     for file in files:  # If these assertions fail, then round_coords didn't fulfil its purpose
         assert len(combination["lat"]) == len(file["lat"])
         assert len(combination["lon"]) == len(file["lon"])
