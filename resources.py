@@ -74,18 +74,19 @@ def get_data_files(gcm, rcp, timeframe, raw=False):
         if raw: files[i] = files[i].rename({"LAT": "lat", "LON": "lon", "Time": "time"})
         files[i] = round_coords(files[i], {"lat", "lon"})
 
-    # Kludge to make up for the fact that the time coordinates for
-    # GFDL-ESM2M/historical/allyears_daily/IBISinput_1998_cst.nc are mislabeled (they seem to refer to 1981, not 1998).
+    # Kludge to make up for the fact that the time coordinates for GFDL-ESM2M, MIROC5, and CESM1's
+    # historical/allyears_daily/IBISinput_1998_cst.nc are mislabeled (they seem to refer to 1981, not 1998).
     # TODO: Remove this as soon as possible
-    if raw and gcm == "GFDL-ESM2M" and rcp == "HISTORIC" and timeframe == "1980-1999":
+    if raw and gcm in ("GFDL-ESM2M", "MIROC5", "CESM1") and rcp == "HISTORIC" and timeframe == "1980-1999":
         # Manually generate the correct time coordinates
         files[18]["time"] = np.arange("1998", "1999", dtype = "datetime64[D]")
-        print("Warning: GDFL-ESM2M 1998 raw input time coordinates kludged")  # Remind ourselves of this
+        print("Warning: "+gcm+" 1998 raw input time coordinates kludged")  # Remind ourselves of this
 
     return files
 
 
 def get_dataset(gcm, rcp, timeframe, raw=False):
+    print(gcm+" "+rcp+" "+timeframe)
     files = get_data_files(gcm, rcp, timeframe, raw)
     # TODO: The next line prints something and I'm not sure exactly what or why....
     combination = xr.combine_by_coords(files)

@@ -6,7 +6,8 @@ import pandas as pd
 import numpy as np
 import resources
 
-SNOW_GCMS = ("bcc-csm1-1", "GFDL-ESM2M")  # TODO: expand to resources.GCMS as soon as data is available for all
+# TODO: expand SNOW_GCMS to resources.GCMS as soon as data is available for all
+SNOW_GCMS = ("bcc-csm1-1", "MIROC5", "CESM1", "GFDL-ESM2M")
 SNOW_THRESHOLD_METERS = 25.4 / 1000
 
 

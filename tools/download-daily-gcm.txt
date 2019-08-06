@@ -3,8 +3,8 @@ lcd Downloads/snowh
 cd ../shared/LCCMR
 
 # Replace these with the name of the GCM (remember to create the local folder structure first)
-lcd GFDL-ESM2M
-cd GFDL-ESM2M
+lcd CNRM-CM5
+cd CNRM-CM5
 
 lcd HISTORIC/1980-1999 
 cd historical/allyears_daily 
