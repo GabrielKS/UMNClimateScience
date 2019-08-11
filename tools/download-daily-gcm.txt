@@ -1,4 +1,6 @@
 # SFTP script to download one GCM's daily data.
+# Run with this command:
+# sftp username@login.msi.umn.edu < /path/to/download-daily-gcm.txt
 lcd Downloads/snowh
 cd ../shared/LCCMR
 

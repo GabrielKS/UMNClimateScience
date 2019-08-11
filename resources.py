@@ -35,6 +35,8 @@ TIMEFRAMES = ("1980-1999", "2040-2059", "2080-2099")
 # TODO: eliminate the redundancy here -- maybe with a different data structure, maybe with one or more functions
 TIMEFRAMES_FOR_RCP = {RCPS[0]: (TIMEFRAMES[0],), RCPS[1]: (TIMEFRAMES[1], TIMEFRAMES[2]), RCPS[2]: (TIMEFRAMES[2],)}
 RCPS_FOR_TIMEFRAME = {TIMEFRAMES[0]: (RCPS[0],), TIMEFRAMES[1]: (RCPS[1],), TIMEFRAMES[2]: (RCPS[1], RCPS[2])}
+# Another way of doing it
+SCENARIOS = (("HISTORIC", "1980-1999"), ("RCP4.5", "2040-2059"), ("RCP4.5", "2080-2099"), ("RCP8.5", "2080-2099"))
 
 # UNUSED: Coordinates were previously rounded to this number of decimals (see round_coords)
 # COORD_DECIMALS = 4
@@ -77,7 +79,7 @@ def get_data_files(gcm, rcp, timeframe, raw=False):
     # Kludge to make up for the fact that the time coordinates for GFDL-ESM2M, MIROC5, and CESM1's
     # historical/allyears_daily/IBISinput_1998_cst.nc are mislabeled (they seem to refer to 1981, not 1998).
     # TODO: Remove this as soon as possible
-    if raw and gcm in ("GFDL-ESM2M", "MIROC5", "CESM1") and rcp == "HISTORIC" and timeframe == "1980-1999":
+    if raw and gcm in ("CNRM-CM5", "GFDL-ESM2M", "MIROC5", "CESM1") and rcp == "HISTORIC" and timeframe == "1980-1999":
         # Manually generate the correct time coordinates
         files[18]["time"] = np.arange("1998", "1999", dtype = "datetime64[D]")
         print("Warning: "+gcm+" 1998 raw input time coordinates kludged")  # Remind ourselves of this
