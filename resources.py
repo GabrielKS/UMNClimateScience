@@ -88,7 +88,7 @@ def get_data_files(gcm, rcp, timeframe, raw=False):
 
 
 def get_dataset(gcm, rcp, timeframe, raw=False):
-    print(gcm+" "+rcp+" "+timeframe)
+    # print(gcm+" "+rcp+" "+timeframe)
     files = get_data_files(gcm, rcp, timeframe, raw)
     # TODO: The next line prints something and I'm not sure exactly what or why....
     combination = xr.combine_by_coords(files)
