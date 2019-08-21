@@ -25,8 +25,17 @@ def main():
           [15.7, 16.1, 17.2, 17.8],
           [15.9, 14.5, 14.2, 12.0]]]
         , dims=["x", "y", "z"])
-    print(g_stats.esacr(sample_1, 1, dim="x"))
 
+    print("Compare values:")
+    print(g_stats.esacr(sample_1, 1, dim="z")[{"esacr": 1}])
+    print(g_stats.esacr(sample_2, 1, dim="z")[{"esacr": 1}])
+
+    print("\nWhen dim is not at the end:")
+    print(g_stats.esacr(sample_1.transpose("y", "z", "x"), 1, dim="z")[{"esacr": 1}])
+
+    print("\nAdjusted n:")
+    u = g_stats.adjusted_n(sample_1, dim="z")
+    print(xr.apply_ufunc(lambda x: np.round(x, 2), u))
 
 
 if __name__ == "__main__":

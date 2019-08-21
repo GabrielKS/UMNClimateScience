@@ -5,39 +5,65 @@
 
 import numpy as np
 import xarray as xr
+import time
 
 
+# Calculates the adjusted sample size accounting for the lag-<lag> autocorrelation
+# Collapses dim/axis, iterates over all other dimensions/axes
+def adjusted_n(data, dim=None, axis=None, lag=1, method="numpy", filterna=True):
+    naive_n = data.count(dim=dim) if dim is not None else data.count(axis=axis)
+    autocorr = esacr(data, lag, dim, axis, method)[..., lag]
+    return naive_n * (1 - autocorr) / (1 + autocorr)
+
+
+# Helper function for esacr
 def esacr_generic(*args, **kwargs):
     if len(args) >= 1: kwargs["data"] = args[0]
     if len(args) >= 2: kwargs["max_lag"] = args[1]
-    # print(kwargs)
-    # exit()
-    esacr(**kwargs)
+    return esacr(**kwargs)
 
 
+# Estimated autocorrelation, a la NCL.
+# If method=numpy, then we simply use NumPy's algorithm to calculate the correlation coefficient between two copies of
+# the input data offset by the lag in each direction, meaning we end up using the mean and variance of these subsets. If
+# method=ncl, then we try to mirror NCL's method as closely as possible, using the mean and variance of the whole
+# dataset. As long as the dataset is large and the lag small, the difference should be negligible (it seems like, for
+# "nice" datasets, the difference should go to 0 as the ratio data_size/max_lag goes to infinity).
 def esacr(data, max_lag, dim=None, axis=None, method="numpy"):
+    assert method == "numpy" or method == "ncl"
     # DEALING WITH INPUT FORMATTING
     if dim is not None:
-        print(1)
         # We have an xarray DataArray with named dimensions, and we reduce to the NumPy numbered axes case
-        return xr.apply_ufunc(esacr_generic, data, input_core_dims=[[dim]],
-                              kwargs={"max_lag": max_lag, "axis": -1, "method": method})
+        # Tried to use apply_ufunc; couldn't figure out how to get it to accept array results for each array input
+
+        # Reorder the dimensions so the one we're messing with is on the end
+        inactive_dims = list(data.dims)
+        inactive_dims.remove(dim)
+        reordered_dims = inactive_dims.copy()
+        reordered_dims.append(dim)
+        data = data.transpose(*reordered_dims)
+
+        # Do the computation in NumPy form
+        result = esacr(data.values, max_lag, None, len(data.dims) - 1, method)
+
+        # Convert back to xarray
+        new_dims = inactive_dims.copy()
+        new_dims.append("esacr")
+        result = xr.DataArray(result, dims=new_dims)
+        return result
+        # return xr.apply_ufunc(esacr_generic, data, input_core_dims=[[dim]],
+        #                       kwargs={"max_lag": max_lag, "axis": -1, "method": method})
     data = np.array(data)  # If it wasn't already a NumPy ndarray, it is now
     if axis is not None:
-        print(2)
         # We have a multidimensional array, and we reduce to the one-dimensional case by looping
         if axis < 0: axis = data.ndim + axis
-        print("axis"+str(axis))
         return np.apply_along_axis(esacr_generic, axis, data, max_lag=max_lag, method=method)
     if data.ndim > 1:
-        print(3)
         # We have a multidimensional array, and we reduce to the one-dimensional case by flattening
-        return esacr(data.flatten())
+        return esacr(data.flatten(), max_lag)
     if data.ndim == 0:
-        print(4)
         # We have a zero-dimensional array, and we reduce to the one-dimensional array by wrapping
-        return esacr(np.array([data]))
-    print(5)
+        return esacr(np.array([data]), max_lag)
     assert isinstance(data, np.ndarray), "Internal conversion to NumPy ndarray failed"
     assert data.ndim == 1, "Internal reduction to one dimension failed"
 
@@ -58,7 +84,8 @@ def esacr(data, max_lag, dim=None, axis=None, method="numpy"):
             results.append(result)
         return results
     if method == "numpy":
-        return np.corrcoef(data[:len(data) - max_lag], data[max_lag:])[0]
+        r = np.corrcoef(data[:len(data) - max_lag], data[max_lag:])[0]
+        return r
     else:
         return None
 
