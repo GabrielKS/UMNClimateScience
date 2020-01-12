@@ -136,6 +136,18 @@ def main():
     output_path = resources.OUTPUT_ROOT + "basic_comparisons.nc"
     all_output.to_netcdf(path=output_path)
 
+def visualize(output):
+    for gcm in output.coords["gcm"].values:
+        for scenario in output.coords["scenario"].values:
+            for delta in output.coords["delta"].values:
+                print(gcm + " " + scenario + " " + delta + " " + "days_snow_above:")
+                resources.print_grid(np.round(
+                    output["days_snow_above"].loc[{"gcm": gcm, "scenario": scenario, "delta": delta}].values, 1),
+                    " ")
+                print(gcm + " " + scenario + " " + delta + " " + "max_yearly_snow:")
+                resources.print_grid(np.round(
+                    output["max_yearly_snow"].loc[{"gcm": gcm, "scenario": scenario, "delta": delta}].values, 1),
+                    " ")
 
 if __name__ == "__main__":
     main()
