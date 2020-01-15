@@ -1,6 +1,8 @@
 #  Written by Gabriel Konar-Steenberg in the summer of 2019.
 #  Part of a University of Minnesota Department of Soil, Water, and Climate climate modeling project.
 
+# Generic code called by a variety of tools within this repository
+
 # Global settings, code for getting data, and general helper functions
 import collections
 import time
@@ -50,9 +52,11 @@ COORD_TOLERANCE = 0.0001
 # Number of years in each model run (TODO: get this programmatically)
 YEARS = 20
 
+universal_resources = None
 UNIVERSAL_MASK = None
 try:
-    UNIVERSAL_MASK = xr.open_dataset(OUTPUT_ROOT + "universal_mask.nc")["mask"]
+    universal_resources = xr.open_dataset(OUTPUT_ROOT + "universal_mask.nc")
+    UNIVERSAL_MASK = universal_resources["mask"]
 except FileNotFoundError:
     print("Universal Mask not found")
 
@@ -102,10 +106,10 @@ def get_dataset(gcm, rcp, timeframe, raw=False):
 # MAKING THE DATA LOOK NICER:
 
 def get_global_coordinates():
-    file = xr.open_dataset(OUTPUT_ROOT + "universal_mask.nc")
+    file = universal_resources
     # Use this if you don't have universal_mask.nc
     # file = xr.open_dataset(get_paths("CNRM-CM5", "HISTORIC", "1980-1999")[0])
-    return {k: file[k] for k in ("lat", "lon")}
+    return {k: file[k] for k in ("lat", "lon")} if file is not None else None
 
 
 global_coordinates = get_global_coordinates()

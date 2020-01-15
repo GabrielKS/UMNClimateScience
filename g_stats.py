@@ -5,7 +5,6 @@
 
 import numpy as np
 import xarray as xr
-import time
 
 
 # Calculates the adjusted sample size accounting for the lag-<lag> autocorrelation
