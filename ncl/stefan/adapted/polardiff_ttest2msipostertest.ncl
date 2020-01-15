@@ -70,8 +70,8 @@ k = 8
     end if
 
     z=w+1
-    numi1="/scratch/liess/LCCMR/[b-z,B-Z][a-l,A-L,n-z,N-Z]*/"+run+"/allyears_daily/IBISinput_20["+w+""+z+"]?_cst_ymonmean"+seas+".nc"
-    numi2="/scratch/liess/LCCMR/[b-z,B-Z][a-l,A-L,n-z,N-Z]*/historical/allyears_daily/IBISinput_19[89]?_cst_ymonmean"+seas+".nc"
+    numi1="input/Stefan2/LCCMR/[b-z,B-Z][a-l,A-L,n-z,N-Z]*/"+run+"/allyears_daily/IBISinput_20["+w+""+z+"]?_cst_ymonmean"+seas+".nc" ; Gabriel changed path
+    numi2="input/Stefan2/LCCMR/[b-z,B-Z][a-l,A-L,n-z,N-Z]*/historical/allyears_daily/IBISinput_19[89]?_cst_ymonmean"+seas+".nc" ; Gabriel changed path
     print(numi1)
 
 ; filp     = "k0200bs"+numi1
@@ -297,7 +297,7 @@ prob_sort2=prob
 system("rm -f ifile ofile")
 system("ln -s "+run+""+z+"_acr.nc ifile")
 
-system("bash ~/scripts/ncl/ncap2.sh")
+system("bash tools/stefan/ncap2.sh") ;Gabriel changed path
 system("mv -f ofile "+run+""+z+"_out.nc")
 system("rm -f ifile")
 
@@ -520,11 +520,11 @@ res@cnLinesOn             = True
 
   overlay(plot,plot2)
 
-  plot3 = gsn_csm_contour(wks,prob_sort2(:,:), res1)  
+  plot3 = gsn_csm_contour(wks,prob_sort2(:,:), res1)
 ;  plot3  = ShadeGtContour(plot3, 0.5, 17)  ; shade all areas less than the
                                           ; 9999 contour level
 
-;  plot3 = gsn_csm_contour(wks,diffttest(:,:)*9/5, res4)  
+;  plot3 = gsn_csm_contour(wks,diffttest(:,:)*9/5, res4)
 
 ;=====================================================END of PLOT3===============================================
 ;  overlay(plot,plot3)

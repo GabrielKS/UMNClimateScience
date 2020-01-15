@@ -20,7 +20,7 @@ begin
 ; read in data
 ;************************************************
 ;path="/Volumes/Macintosh\ HD\ 2/liess"
-path="/scratch/liess"
+path="input/Stefan2"
 
 var="precip_biascorrected"
 ;var="T2_biascorrected"
@@ -49,11 +49,11 @@ yre=yr+1
 ;   yyyy      = ispan(1980,1999,1)
 ;  files = systemfunc("ls ~/DATA/LCCMR/*/historical/allyears_daily/IBISinput_ens8ymonmean.nc")  
   files = systemfunc("ls "+path+"/LCCMR/ZZ_all/"+scenario+"/IBISinput_all7_ens"+yr+"ymonmean.nc "+path+"/LCCMR/[a-z,A-Z][a-l,A-L,m-z,M-Z]*/"+scenario+"/allyears_daily/IBISinput_ens"+yr+"ymonmean.nc | sort -f")  
-  files1 = systemfunc("ls "+path+"/LCCMR/[a-z,A-Z][a-l,A-L,m-z,M-Z]*/"+scenario+"/allyears_daily/IBISinput_??["+yr+yre+"]?_cst_ymonmean.nc | sort -f")  
+  files1 = systemfunc("ls "+path+"/LCCMR/[a-z,A-Z][a-l,A-L,m-z,M-Z]*/"+scenario+"/allyears_daily/IBISinput_??["+yr+yre+"]?_cst_ymonmean.nc | sort -f")
 ;;;  models = systemfunc("ls "+path+"/LCCMR/*/historical/allyears_daily/IBISinput_ens8ymonmean.nc | sort -f | cut -d '/' -f 6; echo MME")  
-  models = systemfunc("ls "+path+"/LCCMR/[a-z,A-Z][a-l,A-L,m-z,M-Z]*/historical/allyears_daily/IBISinput_ens8ymonmean.nc | sort -f | cut -d '/' -f 5; echo MME")  
-
-
+  models = systemfunc("ls "+path+"/LCCMR/[a-z,A-Z][a-l,A-L,m-z,M-Z]*/historical/allyears_daily/IBISinput_ens8ymonmean.nc | sort -f | cut -d '/' -f 4; echo MME") ; Gabriel changed 5 to 4
+print(files)
+print(files1)
 if ( scenario .eq. "historical" ) then
 cent=19
 else
@@ -61,12 +61,12 @@ cent=20
 end if
 
   yrs = cent+""+yr+"0-"+cent+yre+"9"
-
-;  yrs = "20"+yr+"0-20"+yre+"9"
+;  print(scenario)
+;  print(yrs);  yrs = "20"+yr+"0-20"+yre+"9"
 ;  scenario = systemfunc("ls ~/DATA/LCCMR/ACCESS1-3/RCP4.5/allyears_daily/IBISinput_ens8ymonmean.nc | cut -d '/' -f 7")  
   print(models)
 
-g = addfile("IBISinput_Minnesota_raw.nc","r")
+g = addfile(path+"/LCCMR/ZZ_all/"+"IBISinput_Minnesota_raw.nc","r") ; Gabriel changed path
 
 f = addfiles(files,"r")
 f1 = addfiles(files1,"r")
@@ -82,7 +82,7 @@ f2 = addfile(file2,"r")
 
 ;---Read "pottmp" in "join" mode and print a summary of the variable
    ListSetType (f, "join") 
-   ListSetType (f1, "join") 
+   ListSetType (f1, "join")
 
 ;;   temp = f[:]->T2_biascorrected(:,:,80,80)                                    ; ;get  datapottmp   ; note syntax [:]
    tem = f[:]->$var$                                    ; ;get  datapottmp   ; note syntax [:]
@@ -238,7 +238,7 @@ end if
    res4@pmLegendHeightF        = 0.04                ; height of legend.
    res4@xyExplicitLegendLabels           = (/"1980-1999 Obs."/)           ; create legend title
 
-
+print(temp)
 ; plot  = gsn_csm_xy (wks,x,temp,res) ; create plot
 if ( var .eq. "T2_biascorrected" .or. var .eq. "T2" ) then
  plot  = gsn_csm_xy (wks,temp&Time,temp(::-1,:)-273.15,res) ; create plot
