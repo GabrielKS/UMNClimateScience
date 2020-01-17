@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt  # General-purpose library for plotting
 import time  # Used for introducing delays for debugging (time.sleep(x) delays for x seconds)
 import copy  # For copying objects
 
+
 def main():
     path = os.path.dirname(os.getcwd())+"/input/Stefan2"  # To make things slightly simpler, we make this an absolute path now.
     # var = "precip_biascorrected"
@@ -102,6 +103,7 @@ def main():
                 res = Ngl.Resources()  # Original line 127
                 res.nglDraw = False  # Original line 128
                 res.nglFrame = False
+                res.nglMaximize = False  # Set to False to mimic the original, which does this by default, but one might want to set this to True
 
                 res.tiMainString = scenario+" "+str(starting_year)+"-"+str(starting_year+n_years-1) # Original line 132
                 if var == "T2_biascorrected" or var == "T2":
@@ -129,7 +131,6 @@ def main():
                 res1 = copy.copy(res)  # Original line 196. Because of how Python works, if we did res1=res, then they would point to the same object, so changing res1 would change res.
                 res.xyLineColors = colors[0::18]  # Original line 197. As in the original, this actually creates 11 colors.
                 res1.xyLineColor = colors1[8]
-                res1.xyMonoDashPattern = True
 
                 res.pmLegendDisplayMode = "Always"
                 res.pmLegendSide = "Bottom"
@@ -137,29 +138,33 @@ def main():
                 if var == "precip_biascorrected" or var == "precip":
                     res1.tiYAxisString = var+" mm d~S~-1~N~"
                     res.pmLegendParallelPosF = 0.2
-                    res.pmLegendOrthogonalPosF = -1.17
+                    res.pmLegendOrthogonalPosF = -1.15  # Had to change this value slightly to get the same effect
                 else:
                     res1.tiYAxisString = var+" ~S~o~N~C"
                     res.pmLegendParallelPosF = 0.5
                     res.pmLegendOrthogonalPosF = -0.52
 
+                res2 = copy.copy(res)   # If we create res2 after setting res.lg things, we get warnings about the lg things not being valid resources
+                res2.pmLegendDisplayMode = "NoCreate"
+
                 res.pmLegendWidthF = 0.13
                 res.pmLegendHeightF = 0.2
+                res.lgAutoManage = False    # The reference (https://www.pyngl.ucar.edu/Resources/defaults.shtml) states that this is set to False automatically when lgLabelFontHeightF is set, but I have found that it isn't.
                 res.lgLabelFontHeightF = 0.015
                 res.lgTitleOn = False
-
-                res2 = copy.copy(res)
-                res2.pmLegendDisplayMode = "NoCreate"
                 res.xyExplicitLegendLabels = models[::-1]  # We're reversing this to get the top of the alphabet to appear at the top of the legend, I guess
+                res.lgLabelJust = "CenterLeft"  # Not necessary in the original
 
-                res4 = copy.copy(res2)
-                res4.xyDashPatterns = 11
+                res4 = copy.copy(res)   # We want res4 to inherit res's legend settings, not res2's lack thereof
                 res4.pmLegendDisplayMode = "Always"
                 res4.pmLegendSide = "Top"
                 res4.pmLegendParallelPosF = 0.8
                 res4.pmLegendOrthogonalPosF = -0.18
                 res4.pmLegendHeightF = 0.04
                 res4.xyExplicitLegendLabels = ["1980-1999 Obs."]
+
+                res.xyDashPatterns = [x for x in range(17)]  # A direct translation did not produce the same dash patterns. 17 is the maximum number of dash patterns available.
+                res4.xyDashPatterns = 11  # Original line 233
 
                 if var == "T2_biascorrected" or var == "T2":  # Unit conversion for temperature
                     ZERO_CELSIUS = 273.15  # A fun way to do this conversion in one line for all three variables would be: temp, temp1, temp2 = map(lambda x: x-273.15, [temp, temp1, temp2])
@@ -169,19 +174,24 @@ def main():
 
                 temp1 = temp1.stack(z=("model", "year")).transpose()  # PyNGL requires our arrays to have a maximum of two dimensions, so we stack model and year into one dimension, and it requires this stacked dimension to be leftmost, so we transpose
 
-                plot = Ngl.xy(wks, temp["Time"].values, temp.sel(model=slice(None, None, -1)).values, res)  # Plot of monthly data per model+ensemble, averaged across years
-                plot2 = Ngl.xy(wks, temp["Time"].values, temp.sel(model="MME").values, res2)  # Plot of monthly data for just ensemble, averaged across years
-                plot1 = Ngl.xy(wks, temp["Time"].values, temp1.values, res1)  # Plot of monthly data per model per year (no ensemble)
-                plot3 = Ngl.xy(wks, temp["Time"].values, temp2.values, res4)  # Plot of monthly data for historical ensemble
+                plot = Ngl.xy(wks, temp["Time"].values, temp.sel(model=slice(None, None, -1)).values, res)  # Plot of monthly data per model+ensemble, averaged across years (rainbow)
+                plot2 = Ngl.xy(wks, temp["Time"].values, temp.sel(model="MME").values, res2)  # Plot of monthly data for just ensemble, averaged across years (black). Also appears in "plot"; presumably plot2 is to get it on top.
+                plot1 = Ngl.xy(wks, temp["Time"].values, temp1.values, res1)  # Plot of monthly data per model per year (no ensemble) (gray)
+                plot3 = Ngl.xy(wks, temp["Time"].values, temp2.values, res4)  # Plot of monthly data for historical ensemble (black)
 
                 Ngl.overlay(plot1, plot)
                 Ngl.overlay(plot1, plot2)
                 Ngl.overlay(plot1, plot3)
+
                 Ngl.draw(plot1)
                 Ngl.frame(wks)
 
-            else:  # Using matplotlib (actually using an interface called matplotlib.pyplot):
+                Ngl.end()
+                # That should produce a plot that is almost exactly the same as in the original. Notable differences:
+                #   The tickmarks appear on the inside of the graph instead of the outside; I couldn't figure out how to change this
+                #   The positioning of the legends may be slightly different; this can be adjusted
 
+            else:  # Using matplotlib (actually using an interface called matplotlib.pyplot):
                 pass
 
 
@@ -189,6 +199,11 @@ def drop_inconsistent_variables(datasets):  # Drops the variables that do not ap
     common_variables = set(datasets[0]).intersection(*datasets)  # Figure out which variables exist in all datasets
     datasets = [d.drop_vars([v for v in d if v not in common_variables]) for d in datasets]  # Remove all variables that only exist in some of the datasets
     return datasets
+
+
+def ps(s):  # For debugging, prints and sleeps
+    print(s)
+    time.sleep(1)
 
 
 if __name__ == "__main__":
