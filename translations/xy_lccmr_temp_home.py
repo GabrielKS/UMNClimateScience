@@ -95,7 +95,7 @@ def main():
             #   matplotlib — this library is very commonly used across various disciplines
             # Here, I'll show both.
 
-            use_PyNGL = True    # Make this True to generate figures using PyNGL, False for matplotlib
+            use_PyNGL = False    # Make this True to generate figures using PyNGL, False for matplotlib
 
             if use_PyNGL:  # Using PyNGL — this whole section is going to be *very* similar to the original:
                 wks = Ngl.open_wks("png", "xy_lccmr7_"+var+str(decade)+scenario)  # Original line 125
@@ -191,8 +191,21 @@ def main():
                 #   The tickmarks appear on the inside of the graph instead of the outside; I couldn't figure out how to change this
                 #   The positioning of the legends may be slightly different; this can be adjusted
 
-            else:  # Using matplotlib (actually using an interface called matplotlib.pyplot):
-                pass
+            else:  # Using matplotlib:
+                fig, ax = plt.subplots()  # Get a Figure and Axes from matplotlib.pyplot
+
+                temp1 = temp1.stack(z=("model", "year"))
+
+                plot1 = ax.plot(temp["Time"], temp1, color="gray")
+                plot = ax.plot(temp["Time"], temp.transpose())
+                plot2 = ax.plot(temp["Time"], temp.sel(model="MME"), color="black")
+                plot3 = ax.plot(temp["Time"], temp2, "-", color="black")
+
+                leg = ax.legend(plot, temp["model"].values)
+                leg2 = ax.legend(plot3, ("1980-1999 Obs.",))
+                ax.add_artist(leg)
+
+                fig.savefig("fig.png")
 
 
 def drop_inconsistent_variables(datasets):  # Drops the variables that do not appear in all datasets
