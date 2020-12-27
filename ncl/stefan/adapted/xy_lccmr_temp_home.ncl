@@ -1,3 +1,5 @@
+; Adapted by Gabriel Konar-Steenberg from original written by Stefan Liess.
+
 ; ***********************************************
 ; xy_2.ncl
 ;

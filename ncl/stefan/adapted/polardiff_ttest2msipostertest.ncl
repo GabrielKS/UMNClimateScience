@@ -1,3 +1,5 @@
+; Adapted by Gabriel Konar-Steenberg from original written by Stefan Liess.
+
 ;**********************************************************
 ; conOncon_4.ncl
 ;
