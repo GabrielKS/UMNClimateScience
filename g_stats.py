@@ -1,7 +1,7 @@
 #  Written by Gabriel Konar-Steenberg in the summer of 2019.
 #  Part of a University of Minnesota Department of Soil, Water, and Climate climate modeling project.
 
-# A module containing some helpful statistics methods, including autocorrelation and the adjusted t-test
+# A module containing some helpful statistics methods, including autocorrelation and the adjusted t-test.
 
 import numpy as np
 import xarray as xr
@@ -70,7 +70,7 @@ def esacr(data, max_lag, dim=None, axis=None, method="numpy"):
     if method == "ncl":
         # Built to mirror the NCL code exactly. And yet it still differs very slightly in output.
         # TODO: figure out why.
-        # If this is actually used for large datasets, some work should go into optimization.
+        # If this is actually used for large datasets, some work should go into optimization, perhaps with Numba.
         avg = data.mean()
         var = data.var()
         results = []

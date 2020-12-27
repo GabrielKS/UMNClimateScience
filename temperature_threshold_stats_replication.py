@@ -1,7 +1,8 @@
 #  Written by Gabriel Konar-Steenberg in the summer of 2019.
 #  Part of a University of Minnesota Department of Soil, Water, and Climate climate modeling project.
 
-# Built to replicate the days_tmax_at_or_above_90F variable in Terin's "temperature_threshold_stats.nc"
+# Built to replicate the days_tmax_at_or_above_90F variable in Terin's "temperature_threshold_stats.nc", this ends up
+# being a study in how different approaches towards handling missing values can lead to different results.
 
 
 from xarray import DataArray

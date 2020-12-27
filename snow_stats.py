@@ -1,6 +1,9 @@
 #  Written by Gabriel Konar-Steenberg in the summer of 2019.
 #  Part of a University of Minnesota Department of Soil, Water, and Climate climate modeling project.
 
+# From raw snow height data, calculates metrics that are more meaningful and comprehensible to a human audience.
+# Note: Depending on how the input data are structured, one might consider using the "skipna=False" option more often.
+
 import xarray as xr
 import pandas as pd
 import numpy as np

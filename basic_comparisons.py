@@ -131,7 +131,6 @@ def main():
         all_output[label] = variable_output
     all_output = xr.Dataset(all_output)
     print(all_output)
-    # all of the putting back together is very untested
 
     output_path = resources.OUTPUT_ROOT + "basic_comparisons.nc"
     all_output.to_netcdf(path=output_path)

@@ -26,11 +26,11 @@ def main():
     # g = Nio.open_file(path+"/LCCMR/ZZ_all/IBISinput_Minnesota_raw.nc")
     g = xr.open_dataset(path+"/LCCMR/ZZ_all/IBISinput_Minnesota_raw.nc", chunks={})  # Original line 69. We could use PyNIO (see previous line), but I find that xarray does everything PyNIO does plus a lot more, with much more versatility. (Also, PyNIO has been deprecated along with NCL — see https://www.pyngl.ucar.edu/Nio.shtml.) The chunks={} part tells xarray to use Dask behind the scenes — Dask is a library that supports parallelization, lazy evaluation, and other techniques that greatly enhance performance.
 
-    models = [f.name for f in os.scandir(path+"/LCCMR") if f.is_dir()]  # Our models will be each subdirectory of LCCMR; we get the list once, outside of any loops. The syntax on this line is very Pythonic — it generates a list using a loop and an if statement all on one line!
-    models.remove(ensemble_dir)  # Alternatively, we could just specify a list of models — this would be the better approach if we want to be any more selective than this.
-    models = sorted(models, key=str.lower)  # Sort case-insensitive
-    models.append("MME")
-    # print(models)  # This is now the same "models" as on original lines 54,67
+    # models = [f.name for f in os.scandir(path+"/LCCMR") if f.is_dir()]  # Our models will be each subdirectory of LCCMR; we get the list once, outside of any loops. The syntax on this line is very Pythonic — it generates a list using a loop and an if statement all on one line!
+    # models.remove(ensemble_dir)  # Alternatively, we could just specify a list of models — this would be the better approach if we want to be any more selective than this.
+    # models = sorted(models, key=str.lower)  # Sort case-insensitive
+    # models.append("MME")
+    models = ['bcc-csm1-1', 'CCSM4', 'CMCC-CM', 'CNRM-CM5', 'GFDL-ESM2M', 'IPSL-CM5A-LR', 'MIROC5', 'MRI-CGCM3', 'MME']
 
     # scenarios = {"historical": (1980,), "RCP4.5": (2020, 2040, 2080), "RCP8.5": (2080,)}  # This can be edited to select which scenarios and timeframes should be used
     scenarios = {"RCP4.5": (2040,)}  # If only using one timeframe for a given scenario, must put a comma after it

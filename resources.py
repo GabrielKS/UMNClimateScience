@@ -1,7 +1,8 @@
 #  Written by Gabriel Konar-Steenberg in the summer of 2019.
 #  Part of a University of Minnesota Department of Soil, Water, and Climate climate modeling project.
 
-# Generic code called by a variety of tools within this repository
+# Generic code called by a variety of tools within this repository.
+# Work in progress -- expected to evolve with the needs of the project.
 
 # Global settings, code for getting data, and general helper functions
 import collections
@@ -49,7 +50,7 @@ SCENARIOS = (("HISTORIC", "1980-1999"), ("RCP4.5", "2040-2059"), ("RCP4.5", "208
 # Make sure any coordinate rounding does not change coordinates by more than this amount
 COORD_TOLERANCE = 0.0001
 
-# Number of years in each model run (TODO: get this programmatically)
+# Number of years in each model run (TODO: this could be obtained programmatically)
 YEARS = 20
 
 universal_resources = None
@@ -82,7 +83,7 @@ def get_data_files(gcm, rcp, timeframe, raw=False):
 
     # Kludge to make up for the fact that the time coordinates for GFDL-ESM2M, MIROC5, and CESM1's
     # historical/allyears_daily/IBISinput_1998_cst.nc are mislabeled (they seem to refer to 1981, not 1998).
-    # TODO: Remove this as soon as possible
+    # TODO: Remove this when possible
     if raw and gcm in ("CNRM-CM5", "GFDL-ESM2M", "MIROC5", "CESM1") and rcp == "HISTORIC" and timeframe == "1980-1999":
         # Manually generate the correct time coordinates
         files[18]["time"] = np.arange("1998", "1999", dtype = "datetime64[D]")
@@ -115,9 +116,9 @@ def get_global_coordinates():
 global_coordinates = get_global_coordinates()
 
 
-# Helps with a kind of fuzzy coordinate matching that does not exist as a built-in feature of combine_by_coords
-# (see https://github.com/pydata/xarray/issues/2217). Previous version rounded all coordinates to COORD_DECIMALS decimal
-# places; this version rounds coordinates to the nearest value in global_coordinates
+# Helps with a kind of fuzzy coordinate matching that at the time of writing does not exist as a built-in feature of
+# combine_by_coords (see https://github.com/pydata/xarray/issues/2217). Previous version rounded all coordinates to COORD_DECIMALS
+# decimal places; this version rounds coordinates to the nearest value in global_coordinates
 def round_coords(data, dims):
     data = data.reindex({k: global_coordinates[k] for k in dims}, method="nearest", tolerance=COORD_TOLERANCE)
     # TODO: some error checking here might be nice (right now, if indices are not within COORD_TOLERANCE, values just

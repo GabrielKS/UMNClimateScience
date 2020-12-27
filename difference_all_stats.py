@@ -57,7 +57,7 @@ def get_stats_data_files(root=resources.STATS_ROOT):
     return files
 
 
-# Takes a Dataset to operate on, data_this, and a comparison Dataset, data_that, and, for each variable in data_this,
+# Takes a Dataset to operate on, data_this, and a comparison Dataset, data_other, and, for each variable in data_this,
 # sets delta=2 to be this minus other (similarly to how delta=1 is this minus historical)
 def concat_differences(data_this, data_other):
     data_new = {}
