@@ -14,27 +14,40 @@ SNOW_THRESHOLD_METERS = 25.4 / 1000
 
 
 # Computes the average number of days per year where there is SNOW_THRESHOLD_METERS or more of snow on the ground.
-def snow_threshold(raw_data):
-    count = raw_data.where(raw_data >= SNOW_THRESHOLD_METERS).count(dim="time")
-    count = count.where(resources.UNIVERSAL_MASK)
-    count /= resources.YEARS
+def snow_threshold(raw_data, by_year=True):
+    result = {}
+    for label in raw_data:
+        scenario = raw_data[label]
+        count = scenario.where(scenario >= SNOW_THRESHOLD_METERS)
+        if by_year: count = count.groupby("time.year")
+        count = count.count(dim="time")
+        if not by_year: count /= resources.YEARS
+        count = count.where(resources.UNIVERSAL_MASK)
 
-    count.attrs["description"] = "average number of days per year where the snow depth meets or exceeds the threshold"
-    count.attrs["threshold"] = str(SNOW_THRESHOLD_METERS) + " meters"
-    count.attrs["units"] = "number of days"
-    return count
+        if by_year:
+            # Number years 0, 1, 2, ..., 19 instead of with the calendar year so different time periods are directly comparable
+            count = count.assign_coords(year=count["year"]-count["year"][0])
+        count.attrs["description"] = "number of days in each year where the snow depth meets or exceeds the threshold" + ("" if by_year else ", averaged over the whole time period")
+        count.attrs["threshold"] = str(SNOW_THRESHOLD_METERS) + " meters"
+        count.attrs["units"] = "number of days"
+        result[label] = count
+    return xr.concat(result.values(), dim=pd.Index(result.keys(), name="scenario"))
 
 
 # Computes the maximum yearly snow depth.
 # Currently returns an average across all years. Could easily be rewritten to get the maximum depth for each year.
 def max_yearly_snow(raw_data):
-    max_per_year = raw_data.groupby("time.year").max(dim="time", skipna=False)  # SO EASY
-    max_average = max_per_year.sum(dim="year") / resources.YEARS
-    max_average = max_average.where(resources.UNIVERSAL_MASK)
+    result = {}
+    for label in raw_data:
+        scenario = raw_data[label]
+        max_per_year = scenario.groupby("time.year").max(dim="time", skipna=False)  # SO EASY
+        max_average = max_per_year.sum(dim="year") / resources.YEARS
+        max_average = max_average.where(resources.UNIVERSAL_MASK)
 
-    max_average.attrs["description"] = "average maximum yearly snow depth"
-    max_average.attrs["units"] = "meters"
-    return max_average
+        max_average.attrs["description"] = "average maximum yearly snow depth"
+        max_average.attrs["units"] = "meters"
+        result[label] = max_average
+    return xr.concat(result.values(), dim=pd.Index(result.keys(), name="scenario"))
 
 
 # Prints out all the output so it can be scrolled through and sanity-checked by hand
@@ -52,14 +65,14 @@ def print_output(output):
 
 def main():
     # This all could probably be condensed
-    gcm_arr = []
-    for gcm in SNOW_GCMS:
-        scenario_arr = [resources.get_dataset(gcm, *scenario, raw=True)["SNOWH"] for scenario in resources.SCENARIOS]
-        gcm_arr.append(xr.concat(
-            scenario_arr, dim=pd.Index(map(lambda x: x[1] + "_" + x[0], resources.SCENARIOS), name="scenario")))
-    snowh = xr.concat(gcm_arr, dim=pd.Index(SNOW_GCMS, name="gcm"))
+    # New methodology: keep the scenarios separate to begin with; it makes it easier to deal with years individually.
+    scenario_dict = {}
+    for scenario in resources.SCENARIOS:
+        gcm_arr = [resources.get_dataset(gcm, *scenario, raw=True)["SNOWH"] for gcm in SNOW_GCMS]
+        # for a in gcm_arr: print(list(a["time"].values)[::100])
+        scenario_dict[scenario[1]+"_"+scenario[0]] = xr.concat(gcm_arr, dim=pd.Index(SNOW_GCMS, name="gcm"))
 
-    output = xr.Dataset({"days_snow_above": snow_threshold(snowh), "max_yearly_snow": max_yearly_snow(snowh)})
+    output = xr.Dataset({"days_snow_above": snow_threshold(scenario_dict), "max_yearly_snow": max_yearly_snow(scenario_dict)})
     # Keep the attributes so we can reapply them after the concat below erases them
     attrs = {k: output[k].attrs for k in output.variables}
 
@@ -91,7 +104,7 @@ def main():
                             "2 = mid-century = projection - mid-century; " \
                             "3 = rcp = [NaN, NaN, RCP4.5 - RCP8.5, RCP8/5 - RCP4.5"
 
-    output_path = resources.OUTPUT_ROOT + "snow_stats.nc"
+    output_path = resources.OUTPUT_ROOT + "snow_stats4.nc"
     output.to_netcdf(path=output_path)
 
     # To test:

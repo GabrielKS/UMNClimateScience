@@ -21,7 +21,8 @@ PROCESSED_ROOT = os.path.expanduser("~/Downloads/LCCMR_IBIS/")
 
 # Currently contains all the raw data from MSI, but I may get rid of all but the SNOWH variable to save space
 # (snow seems to be the only thing I need this for)
-RAW_ROOT = os.path.expanduser("~/Downloads/snowh/")
+# RAW_ROOT = os.path.expanduser("~/Downloads/snowh/")
+RAW_ROOT = os.path.expanduser("/Volumes/G-Machine 2 Backup SSD/Other/UMNClimateScience Downloads/snowh/")
 
 # Terin's stats
 STATS_ROOT = os.path.expanduser("~/Downloads/ensemble_average_stats/")
@@ -88,6 +89,15 @@ def get_data_files(gcm, rcp, timeframe, raw=False):
         # Manually generate the correct time coordinates
         files[18]["time"] = np.arange("1998", "1999", dtype = "datetime64[D]")
         print("Warning: "+gcm+" 1998 raw input time coordinates kludged")  # Remind ourselves of this
+
+    # Kludge to make up for the fact that the time coordinates for CNRM-CM5's
+    # RCP4.5/2040-2059/IBISinput_2058_cst.nc and RCP4.5/2080-2099/IBISinput_2098_cst.nc are also mislabeled as 1981.
+    # TODO: Remove this when possible
+    if raw and gcm == "CNRM-CM5" and rcp == "RCP4.5" and timeframe != "1980-1999":
+        # Manually generate the correct time coordinates
+        start_year, end_year = ("2058", "2059") if timeframe == "2040-2059" else ("2098", "2099")
+        files[18]["time"] = np.arange(start_year, end_year, dtype = "datetime64[D]")
+        print("Warning: "+gcm+" "+rcp+" "+start_year+" raw input time coordinates kludged")  # Remind ourselves of this
 
     return files
 
